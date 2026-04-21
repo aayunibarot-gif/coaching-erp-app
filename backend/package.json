@@ -12,6 +12,9 @@
     "seed": "node src/seed.js"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.1",
+    "@capacitor/cli": "^8.3.1",
+    "@capacitor/core": "^8.3.1",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
