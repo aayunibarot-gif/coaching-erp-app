@@ -94,11 +94,11 @@ export default function DashboardPage() {
         />
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <StatCard title="Total Students" value={students.length} hint="Active admissions" />
-          <StatCard title="Faculty Members" value={teachers.length} hint="Teaching staff" />
-          <StatCard title="Active Standards" value={demoClasses.length} hint="Morning & evening batches" />
-          <StatCard title="Attendance %" value={attendancePercent} hint="Overall attendance" />
-          <StatCard title="Pending Fees" value={pendingFeeStudents.length} hint="Students with dues" />
+          <StatCard title="Total Students" value={students.length} hint="Active admissions" icon="👨‍🎓" />
+          <StatCard title="Faculty Members" value={teachers.length} hint="Teaching staff" icon="👩‍🏫" />
+          <StatCard title="Active Standards" value={demoClasses.length} hint="Morning & evening batches" icon="📚" />
+          <StatCard title="Attendance %" value={attendancePercent} hint="Overall attendance" icon="📝" />
+          <StatCard title="Pending Fees" value={pendingFeeStudents.length} hint="Students with dues" icon="💰" />
         </div>
 
         <div className="grid gap-6 xl:grid-cols-3">

@@ -51,8 +51,8 @@ export default function LoginPage() {
           />
         </div>
 
-        <h2 className="text-center text-2xl font-bold text-slate-900">
-          Eduverse Coaching ERP
+        <h2 className="text-center text-3xl font-black tracking-tight text-slate-900 uppercase">
+          Eduverse Coaching
         </h2>
 
         <p className="mt-1 text-center text-sm text-slate-500">
