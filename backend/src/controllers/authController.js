@@ -14,12 +14,15 @@ export const login = async (req, res) => {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email }).populate("classId", "standardName");
-
+    
+    console.log("Login Attempt for:", email);
     if (!user) {
+      console.log("DEBUG: User not found in database.");
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
     const match = await bcrypt.compare(password, user.password);
+    console.log("DEBUG: Password match result:", match);
 
     if (!match) {
       return res.status(401).json({ message: "Invalid email or password" });
