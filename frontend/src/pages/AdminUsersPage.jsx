@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import SectionHeader from "../components/SectionHeader";
 import Table from "../components/Table";
 import { useAuth } from "../context/AuthContext";
-import { demoClasses, demoUsers } from "../data/demoData";
+import { demoClasses, demoUsers } from "../data/demo-data";
 
 const initialForm = {
   name: "",

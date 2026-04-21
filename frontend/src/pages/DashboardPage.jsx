@@ -11,7 +11,7 @@ import {
   demoMarks,
   demoAttendanceRecords,
   demoNotices,
-} from "../data/demoData";
+} from "../data/demo-data";
 
 export default function DashboardPage() {
   const { user } = useAuth();

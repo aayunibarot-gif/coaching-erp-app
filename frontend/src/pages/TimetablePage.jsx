@@ -3,7 +3,7 @@ import SectionHeader from "../components/SectionHeader";
 import Table from "../components/Table";
 import StatCard from "../components/StatCard";
 import { useAuth } from "../context/AuthContext";
-import { demoClasses, demoSubjects, demoTimetable } from "../data/demoData";
+import { demoClasses, demoSubjects, demoTimetable } from "../data/demo-data";
 
 export default function TimetablePage() {
   const { user } = useAuth();

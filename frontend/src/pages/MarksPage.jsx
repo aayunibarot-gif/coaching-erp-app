@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import SectionHeader from "../components/SectionHeader";
 import Table from "../components/Table";
 import StatCard from "../components/StatCard";
-import { demoMarks, demoUsers } from "../data/demoData";
+import { demoMarks, demoUsers } from "../data/demo-data";
 
 export default function MarksPage() {
 

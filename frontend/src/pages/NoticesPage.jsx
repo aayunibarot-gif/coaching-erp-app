@@ -1,6 +1,6 @@
 import React from "react";
 import SectionHeader from "../components/SectionHeader";
-import { demoNotices } from "../data/demoData";
+import { demoNotices } from "../data/demo-data";
 
 export default function NoticesPage() {
   return (

@@ -3,7 +3,7 @@ import SectionHeader from "../components/SectionHeader";
 import Table from "../components/Table";
 import StatCard from "../components/StatCard";
 import { useAuth } from "../context/AuthContext";
-import { demoClasses, demoSubjects, demoUsers } from "../data/demoData";
+import { demoClasses, demoSubjects, demoUsers } from "../data/demo-data";
 
 export default function SubjectsPage() {
   const { user } = useAuth();

@@ -9,7 +9,7 @@ import {
   demoFees,
   demoMarks,
   demoUsers
-} from "../data/demoData";
+} from "../data/demo-data";
 
 export default function StudentDetailsPage() {
   const { user } = useAuth();

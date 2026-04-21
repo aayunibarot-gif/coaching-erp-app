@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import SectionHeader from "../components/SectionHeader";
 import Table from "../components/Table";
 import StatCard from "../components/StatCard";
-import { demoAttendanceRecords, demoClasses, demoUsers } from "../data/demoData";
+import { demoAttendanceRecords, demoClasses, demoUsers } from "../data/demo-data";
 import { useAuth } from "../context/AuthContext";
 
 export default function AttendancePage() {

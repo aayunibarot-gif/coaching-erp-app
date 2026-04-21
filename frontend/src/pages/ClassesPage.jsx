@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import SectionHeader from "../components/SectionHeader";
 import Table from "../components/Table";
 import { useAuth } from "../context/AuthContext";
-import { demoClasses } from "../data/demoData";
+import { demoClasses } from "../data/demo-data";
 
 export default function ClassesPage() {
   const { user } = useAuth();
