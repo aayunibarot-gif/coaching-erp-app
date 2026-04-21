@@ -1,0 +1,28 @@
+workflows:
+  ios-capacitor-workflow:
+    name: iOS Capacitor Build
+    instance_type: mac_mini_m1
+    max_build_duration: 60
+    environment:
+      node: latest
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Install dependencies
+        script: |
+          cd frontend
+          npm install
+      - name: Build web project
+        script: |
+          cd frontend
+          npm run build
+      - name: Capacitor Sync
+        script: |
+          cd frontend
+          npx cap sync ios
+      - name: Build iOS native app
+        script: |
+          cd frontend/ios/App
+          xcodebuild build -scheme App -destination 'generic/platform=iOS' -configuration Release CODE_SIGNING_ALLOWED=NO
+    artifacts:
+      - frontend/ios/App/build/Release-iphoneos/*.app
