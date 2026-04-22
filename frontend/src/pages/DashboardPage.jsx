@@ -12,6 +12,15 @@ import {
   demoAttendanceRecords,
   demoNotices,
 } from "../data/demo-data";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -400,6 +409,30 @@ export default function DashboardPage() {
             ]}
             rows={studentAttendance}
           />
+        </div>
+        <div className="card md:col-span-2">
+          <h2 className="mb-4 text-xl font-bold text-slate-900">Performance Graph</h2>
+          {studentMarks.length > 0 ? (
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={studentMarks.map(m => ({
+                  subject: m.subjectId.subjectName,
+                  score: Math.round((m.obtainedMarks / m.maxMarks) * 100)
+                }))}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis dataKey="subject" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                  <Tooltip 
+                    cursor={{fill: '#f1f5f9'}}
+                    contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                  />
+                  <Bar dataKey="score" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={50} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <p className="text-slate-500">No test results to display.</p>
+          )}
         </div>
       </div>
     </div>
