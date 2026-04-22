@@ -84,6 +84,14 @@ export default function FeesPage() {
     });
   };
 
+  const updateStatus = (rowId, newStatus) => {
+    setRows((prev) =>
+      prev.map((item) =>
+        item._id === rowId ? { ...item, status: newStatus } : item
+      )
+    );
+  };
+
   const getStatusBadge = (status) => {
     if (status === "paid") {
       return (
@@ -127,7 +135,7 @@ export default function FeesPage() {
         <StatCard title="Overdue Students" value={totals.overdueCount} hint="Pending beyond due date" />
       </div>
 
-      {user.role === "admin" && (
+      {(user.role === "admin" || user.role === "teacher") && (
         <form onSubmit={submit} className="card grid gap-4 md:grid-cols-3">
           <div className="md:col-span-3">
             <h2 className="text-xl font-bold text-slate-900">Add Fee Record</h2>
@@ -263,7 +271,27 @@ export default function FeesPage() {
             {
               key: "status",
               label: "Status",
-              render: (row) => getStatusBadge(row.status)
+              render: (row) => (
+                <div className="flex flex-col gap-2">
+                  {getStatusBadge(row.status)}
+                  {(user.role === "admin" || user.role === "teacher") && (
+                    <div className="flex gap-1">
+                      <button 
+                        onClick={() => updateStatus(row._id, "paid")}
+                        className="text-[10px] font-bold text-emerald-600 hover:underline"
+                      >
+                        Paid
+                      </button>
+                      <button 
+                        onClick={() => updateStatus(row._id, "partial")}
+                        className="text-[10px] font-bold text-amber-600 hover:underline"
+                      >
+                        Partial
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )
             }
           ]}
           rows={visibleRows}

@@ -133,6 +133,9 @@ export default function AdminUsersPage() {
 
   const filteredRows = useMemo(() => {
     return rows.filter((row) => {
+      // Teachers only see students
+      if (user.role === "teacher" && row.role !== "student") return false;
+
       const matchStandard =
         selectedStandard === "all" || row.classId?._id === selectedStandard;
 

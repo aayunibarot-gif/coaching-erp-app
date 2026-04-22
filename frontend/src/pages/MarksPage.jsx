@@ -1,29 +1,40 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import SectionHeader from "../components/SectionHeader";
 import Table from "../components/Table";
 import StatCard from "../components/StatCard";
-import { demoMarks, demoUsers } from "../data/demo-data";
+import { demoMarks, demoUsers, demoSubjects, demoClasses } from "../data/demo-data";
+import { useAuth } from "../context/AuthContext";
 
 export default function MarksPage() {
-
+  const { user } = useAuth();
+  const [marks, setMarks] = useState(demoMarks);
   const students = demoUsers.filter((u) => u.role === "student");
 
-  const avgMarks = useMemo(() => {
-    if (!demoMarks.length) return 0;
+  const [form, setForm] = useState({
+    studentId: "",
+    subjectId: "",
+    testType: "Unit Test",
+    obtainedMarks: "",
+    maxMarks: "100",
+    examDate: new Date().toISOString().split("T")[0]
+  });
 
-    const total = demoMarks.reduce(
+  const avgMarks = useMemo(() => {
+    if (!marks.length) return 0;
+
+    const total = marks.reduce(
       (sum, item) => sum + (item.obtainedMarks / item.maxMarks) * 100,
       0
     );
 
-    return Math.round(total / demoMarks.length);
-  }, []);
+    return Math.round(total / marks.length);
+  }, [marks]);
 
   const topPerformers = useMemo(() => {
     return students
       .map((student) => {
-        const studentMarks = demoMarks.filter(
-          (m) => m.studentId._id === student._id
+        const studentMarks = marks.filter(
+          (m) => (m.studentId._id || m.studentId) === student._id
         );
 
         const avg = studentMarks.length
@@ -43,7 +54,35 @@ export default function MarksPage() {
       })
       .sort((a, b) => b.average - a.average)
       .slice(0, 5);
-  }, []);
+  }, [marks, students]);
+
+  const submit = (e) => {
+    e.preventDefault();
+    const student = students.find(s => s._id === form.studentId);
+    const subject = demoSubjects.find(s => s._id === form.subjectId);
+
+    if (!student || !subject) return;
+
+    const newMark = {
+      _id: `m${Date.now()}`,
+      studentId: student,
+      subjectId: subject,
+      testType: form.testType,
+      obtainedMarks: Number(form.obtainedMarks),
+      maxMarks: Number(form.maxMarks),
+      examDate: form.examDate
+    };
+
+    setMarks([newMark, ...marks]);
+    setForm({ ...form, studentId: "", obtainedMarks: "" });
+    alert("Marks added successfully!");
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm("Delete this record?")) {
+      setMarks(marks.filter(m => m._id !== id));
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -54,19 +93,112 @@ export default function MarksPage() {
       />
 
       <div className="grid gap-4 md:grid-cols-3">
-        <StatCard title="Total Tests" value={demoMarks.length} />
+        <StatCard title="Total Tests" value={marks.length} />
         <StatCard title="Students Evaluated" value={students.length} />
         <StatCard title="Average Score %" value={avgMarks} />
       </div>
 
+      {(user.role === "admin" || user.role === "teacher") && (
+        <form onSubmit={submit} className="card grid gap-4 md:grid-cols-3">
+          <div className="md:col-span-3">
+            <h2 className="text-xl font-bold text-slate-900">Add Marks Record</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Select student, subject, and enter test performance.
+            </p>
+          </div>
+
+          <div>
+            <label className="label">Student</label>
+            <select
+              className="input"
+              value={form.studentId}
+              onChange={(e) => setForm({ ...form, studentId: e.target.value })}
+              required
+            >
+              <option value="">Select student</option>
+              {students.map((s) => (
+                <option key={s._id} value={s._id}>
+                  {s.studentId} • {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="label">Subject</label>
+            <select
+              className="input"
+              value={form.subjectId}
+              onChange={(e) => setForm({ ...form, subjectId: e.target.value })}
+              required
+            >
+              <option value="">Select subject</option>
+              {demoSubjects.map((s) => (
+                <option key={s._id} value={s._id}>
+                  {s.subjectName}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="label">Test Type</label>
+            <select
+              className="input"
+              value={form.testType}
+              onChange={(e) => setForm({ ...form, testType: e.target.value })}
+            >
+              <option>Unit Test</option>
+              <option>Weekly Test</option>
+              <option>Mid Term</option>
+              <option>Final Exam</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="label">Obtained Marks</label>
+            <input
+              className="input"
+              type="number"
+              value={form.obtainedMarks}
+              onChange={(e) => setForm({ ...form, obtainedMarks: e.target.value })}
+              required
+            />
+          </div>
+
+          <div>
+            <label className="label">Max Marks</label>
+            <input
+              className="input"
+              type="number"
+              value={form.maxMarks}
+              onChange={(e) => setForm({ ...form, maxMarks: e.target.value })}
+              required
+            />
+          </div>
+
+          <div>
+            <label className="label">Exam Date</label>
+            <input
+              className="input"
+              type="date"
+              value={form.examDate}
+              onChange={(e) => setForm({ ...form, examDate: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="md:col-span-3">
+            <button className="btn-primary">Save Marks Record</button>
+          </div>
+        </form>
+      )}
+
       <div className="grid gap-6 lg:grid-cols-2">
-
         <div className="card">
-
           <h2 className="mb-4 text-xl font-bold text-slate-900">
             Top Performers
           </h2>
-
           <Table
             columns={[
               { key: "studentId", label: "Student ID" },
@@ -75,15 +207,12 @@ export default function MarksPage() {
             ]}
             rows={topPerformers}
           />
-
         </div>
 
         <div className="card">
-
           <h2 className="mb-4 text-xl font-bold text-slate-900">
             Recent Test Results
           </h2>
-
           <Table
             columns={[
               { key: "student", label: "Student", render: (row) => row.studentId?.name },
@@ -91,13 +220,24 @@ export default function MarksPage() {
               { key: "testType", label: "Test Type" },
               { key: "obtainedMarks", label: "Obtained" },
               { key: "maxMarks", label: "Max" },
-              { key: "examDate", label: "Date" }
+              {
+                key: "actions",
+                label: "Actions",
+                render: (row) => (
+                  (user.role === "admin" || user.role === "teacher") && (
+                    <button 
+                      onClick={() => handleDelete(row._id)}
+                      className="text-red-500 hover:underline text-xs font-bold"
+                    >
+                      Delete
+                    </button>
+                  )
+                )
+              }
             ]}
-            rows={demoMarks}
+            rows={marks}
           />
-
         </div>
-
       </div>
 
     </div>

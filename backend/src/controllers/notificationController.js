@@ -7,7 +7,8 @@ export async function listNotifications(req, res) {
   const query = {
     $or: [
       { audienceRole: "all" },
-      { audienceRole: role }
+      { audienceRole: role },
+      { studentId: req.user._id }
     ]
   };
 

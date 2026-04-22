@@ -18,6 +18,8 @@ import remarkRoutes from "./routes/remarkRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import assistantRoutes from "./routes/assistantRoutes.js";
+import materialRoutes from "./routes/materialRoutes.js";
+import path from "path";
 
 const app = express();
 await connectDB();
@@ -46,6 +48,7 @@ app.use(
 
 app.use(express.json());
 app.use(morgan("dev"));
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.use(
   "/api/auth",
@@ -68,6 +71,7 @@ app.use("/api/remarks", remarkRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/assistant", assistantRoutes);
+app.use("/api/materials", materialRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

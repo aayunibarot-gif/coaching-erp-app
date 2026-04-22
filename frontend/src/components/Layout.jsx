@@ -10,6 +10,7 @@ const navItems = [
   { to: "/timetable", label: "Timetable", emoji: "📅" },
   { to: "/attendance", label: "Attendance", emoji: "📝" },
   { to: "/marks", label: "Tests & Marks", emoji: "🏆" },
+  { to: "/materials", label: "Study Materials", emoji: "📂" },
   { to: "/fees", label: "Fees", emoji: "💰" },
   { to: "/notices", label: "Notices", emoji: "🔔" },
   { to: "/assistant", label: "AI Assistant", emoji: "🤖" },
@@ -73,24 +74,39 @@ export default function Layout() {
 
             {/* Navigation Scroll Area */}
             <nav className="flex-1 space-y-1 overflow-y-auto px-4 custom-scrollbar">
-              {navItems.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.to === "/"}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-semibold transition-all duration-200 ${
-                      isActive
-                        ? "bg-white text-slate-900 shadow-lg shadow-indigo-500/10 scale-[1.02]"
-                        : "text-slate-400 hover:bg-white/5 hover:text-white"
-                    }`
+              {navItems
+                .filter((item) => {
+                  // Role-based filtering
+                  if (user.role === "student") {
+                    // Students cannot see "Students" management
+                    if (item.to === "/users") return false;
                   }
-                >
-                  <span className="text-lg">{item.emoji}</span>
-                  {item.label}
-                </NavLink>
-              ))}
+                  
+                  if (user.role === "admin" || user.role === "teacher") {
+                    // Admin and Teacher don't need AI Assistant
+                    if (item.to === "/assistant") return false;
+                  }
+
+                  return true;
+                })
+                .map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.to === "/"}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-semibold transition-all duration-200 ${
+                        isActive
+                          ? "bg-white text-slate-900 shadow-lg shadow-indigo-500/10 scale-[1.02]"
+                          : "text-slate-400 hover:bg-white/5 hover:text-white"
+                      }`
+                    }
+                  >
+                    <span className="text-lg">{item.emoji}</span>
+                    {item.label}
+                  </NavLink>
+                ))}
             </nav>
 
             {/* Logout Section */}

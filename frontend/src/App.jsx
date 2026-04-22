@@ -18,6 +18,7 @@ import FeesPage from "./pages/FeesPage";
 import NoticesPage from "./pages/NoticesPage";
 import AssistantPage from "./pages/AssistantPage";
 import StudentDetailsPage from "./pages/StudentDetailsPage";
+import MaterialsPage from "./pages/MaterialsPage";
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -54,6 +55,7 @@ export default function App() {
         <Route path="timetable" element={<TimetablePage />} />
         <Route path="attendance" element={<AttendancePage />} />
         <Route path="marks" element={<MarksPage />} />
+        <Route path="materials" element={<MaterialsPage />} />
         <Route path="fees" element={<FeesPage />} />
         <Route path="notices" element={<NoticesPage />} />
         <Route path="assistant" element={<AssistantPage />} />
