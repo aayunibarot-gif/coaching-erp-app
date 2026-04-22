@@ -16,6 +16,31 @@ const initialForm = {
   classId: ""
 };
 
+// Generates a secure random password like: Tr8@kZ#mP2!
+const generateStrongPassword = () => {
+  const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const lower = "abcdefghjkmnpqrstuvwxyz";
+  const digits = "23456789";
+  const symbols = "@#!$%&";
+  const all = upper + lower + digits + symbols;
+  
+  // Guarantee at least one of each type
+  let pwd = [
+    upper[Math.floor(Math.random() * upper.length)],
+    lower[Math.floor(Math.random() * lower.length)],
+    digits[Math.floor(Math.random() * digits.length)],
+    symbols[Math.floor(Math.random() * symbols.length)],
+  ];
+  
+  // Fill the rest up to 12 characters
+  for (let i = pwd.length; i < 12; i++) {
+    pwd.push(all[Math.floor(Math.random() * all.length)]);
+  }
+  
+  // Shuffle
+  return pwd.sort(() => Math.random() - 0.5).join("");
+};
+
 export default function AdminUsersPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -29,6 +54,9 @@ export default function AdminUsersPage() {
   const [editingId, setEditingId] = useState(null);
   const [selectedStandard, setSelectedStandard] = useState("all");
   const [search, setSearch] = useState("");
+  const [passwordMode, setPasswordMode] = useState(null); // null | 'manual' | 'generate'
+  const [showPassword, setShowPassword] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("erp_users", JSON.stringify(rows));
@@ -41,6 +69,9 @@ export default function AdminUsersPage() {
   const resetForm = () => {
     setForm(initialForm);
     setEditingId(null);
+    setPasswordMode(null);
+    setShowPassword(false);
+    setCopied(false);
   };
 
   const generateStudentId = () => {
@@ -194,13 +225,114 @@ export default function AdminUsersPage() {
             <label className="label">
               Password {editingId ? "(leave blank to keep same)" : ""}
             </label>
-            <input
-              className="input"
-              type="password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              required={!editingId}
-            />
+
+            {/* Password Mode Selector */}
+            {!editingId && passwordMode === null && (
+              <div className="flex gap-2 mt-1">
+                <button
+                  type="button"
+                  onClick={() => setPasswordMode("manual")}
+                  className="flex-1 rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:border-indigo-400 hover:text-indigo-600 transition text-left"
+                >
+                  ✏️ Create your own password
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const pwd = generateStrongPassword();
+                    setForm((f) => ({ ...f, password: pwd }));
+                    setPasswordMode("generate");
+                    setShowPassword(true);
+                    setCopied(false);
+                  }}
+                  className="flex-1 rounded-xl border-2 border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-semibold text-indigo-700 hover:border-indigo-500 hover:bg-indigo-100 transition text-left"
+                >
+                  ⚡ Generate strong password
+                </button>
+              </div>
+            )}
+
+            {/* Manual Password Input */}
+            {(passwordMode === "manual" || editingId) && (
+              <div className="relative mt-1">
+                <input
+                  className="input pr-20"
+                  type={showPassword ? "text" : "password"}
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  placeholder="Enter your password"
+                  required={!editingId}
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500 hover:text-slate-700"
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
+            )}
+
+            {/* Generated Password Display */}
+            {passwordMode === "generate" && (
+              <div className="mt-2 space-y-2">
+                <div className="flex items-center gap-2 rounded-xl bg-indigo-50 border border-indigo-200 px-4 py-3">
+                  <span className="flex-1 font-mono text-sm font-bold tracking-widest text-indigo-700">
+                    {showPassword ? form.password : "••••••••••••"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="text-xs text-slate-500 hover:text-slate-700 font-semibold"
+                  >
+                    {showPassword ? "Hide" : "Show"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(form.password);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    }}
+                    className="text-xs font-bold text-indigo-600 hover:text-indigo-800"
+                  >
+                    {copied ? "✓ Copied!" : "Copy"}
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const pwd = generateStrongPassword();
+                      setForm((f) => ({ ...f, password: pwd }));
+                      setCopied(false);
+                    }}
+                    className="text-xs font-semibold text-indigo-600 hover:underline"
+                  >
+                    🔄 Regenerate
+                  </button>
+                  <span className="text-slate-300">|</span>
+                  <button
+                    type="button"
+                    onClick={() => { setPasswordMode(null); setForm(f => ({...f, password: ""})); }}
+                    className="text-xs font-semibold text-slate-500 hover:underline"
+                  >
+                    ← Change method
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {passwordMode === "manual" && (
+              <button
+                type="button"
+                onClick={() => { setPasswordMode(null); setForm(f => ({...f, password: ""})); }}
+                className="mt-1 text-xs font-semibold text-slate-400 hover:text-slate-600"
+              >
+                ← Change method
+              </button>
+            )}
           </div>
 
           <div>
