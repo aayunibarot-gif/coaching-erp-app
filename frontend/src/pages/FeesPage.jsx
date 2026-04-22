@@ -20,11 +20,17 @@ export default function FeesPage() {
 
   const students = demoUsers.filter((u) => u.role === "student");
 
+  const visibleRows =
+    user.role === "student"
+      ? rows.filter((row) => row.studentId?._id === user._id)
+      : rows;
+
   const totals = useMemo(() => {
-    const totalCollection = rows.reduce((sum, item) => sum + Number(item.paidAmount || 0), 0);
-    const totalPending = rows.reduce((sum, item) => sum + Number(item.pendingAmount || 0), 0);
-    const partialCount = rows.filter((item) => item.pendingAmount > 0 && item.paidAmount > 0).length;
-    const overdueCount = rows.filter(
+    const sourceRows = user.role === "student" ? visibleRows : rows;
+    const totalCollection = sourceRows.reduce((sum, item) => sum + Number(item.paidAmount || 0), 0);
+    const totalPending = sourceRows.reduce((sum, item) => sum + Number(item.pendingAmount || 0), 0);
+    const partialCount = sourceRows.filter((item) => item.pendingAmount > 0 && item.paidAmount > 0).length;
+    const overdueCount = sourceRows.filter(
       (item) => item.pendingAmount > 0 && new Date(item.dueDate) < new Date("2026-05-15")
     ).length;
 
@@ -34,7 +40,7 @@ export default function FeesPage() {
       partialCount,
       overdueCount
     };
-  }, [rows]);
+  }, [rows, visibleRows]);
 
   const submit = (e) => {
     e.preventDefault();
@@ -124,12 +130,12 @@ export default function FeesPage() {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Fees Management"
-        subtitle="Track tuition collection, pending installments, and overdue payments"
+        title={user.role === "student" ? "My Fee Details" : "Fees Management"}
+        subtitle={user.role === "student" ? "Your tuition fee status and payment history" : "Track tuition collection, pending installments, and overdue payments"}
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Total Collection" value={`₹${totals.totalCollection}`} hint="Fees received so far" />
+        <StatCard title={user.role === "student" ? "Total Fee" : "Total Collection"} value={`₹${totals.totalCollection}`} hint={user.role === "student" ? "Your total fee" : "Fees received so far"} />
         <StatCard title="Total Pending" value={`₹${totals.totalPending}`} hint="Outstanding amount" />
         <StatCard title="Partial Payments" value={totals.partialCount} hint="Students with installments" />
         <StatCard title="Overdue Students" value={totals.overdueCount} hint="Pending beyond due date" />

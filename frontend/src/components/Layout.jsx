@@ -14,6 +14,7 @@ const navItems = [
   { to: "/fees", label: "Fees", emoji: "💰" },
   { to: "/notices", label: "Notices", emoji: "🔔" },
   { to: "/assistant", label: "AI Assistant", emoji: "🤖" },
+  { to: "/profile", label: "My Profile", emoji: "👤" },
 ];
 
 export default function Layout() {
@@ -76,15 +77,17 @@ export default function Layout() {
             <nav className="flex-1 space-y-1 overflow-y-auto px-4 custom-scrollbar">
               {navItems
                 .filter((item) => {
-                  // Role-based filtering
                   if (user.role === "student") {
-                    // Students cannot see "Students" management
+                    // Students cannot see management pages
                     if (item.to === "/users") return false;
+                    if (item.to === "/classes") return false;
+                    if (item.to === "/subjects") return false;
                   }
-                  
+
                   if (user.role === "admin" || user.role === "teacher") {
-                    // Admin and Teacher don't need AI Assistant
+                    // Admin and Teacher don't need AI Assistant or My Profile
                     if (item.to === "/assistant") return false;
+                    if (item.to === "/profile") return false;
                   }
 
                   return true;

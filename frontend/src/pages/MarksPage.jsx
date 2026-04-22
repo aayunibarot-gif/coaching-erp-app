@@ -10,6 +10,11 @@ export default function MarksPage() {
   const [marks, setMarks] = useState(demoMarks);
   const students = demoUsers.filter((u) => u.role === "student");
 
+  // Students only see their own marks
+  const visibleMarks = user.role === "student"
+    ? marks.filter(m => (m.studentId._id || m.studentId) === user._id)
+    : marks;
+
   const [form, setForm] = useState({
     studentId: "",
     subjectId: "",
@@ -20,15 +25,15 @@ export default function MarksPage() {
   });
 
   const avgMarks = useMemo(() => {
-    if (!marks.length) return 0;
+    if (!visibleMarks.length) return 0;
 
-    const total = marks.reduce(
+    const total = visibleMarks.reduce(
       (sum, item) => sum + (item.obtainedMarks / item.maxMarks) * 100,
       0
     );
 
-    return Math.round(total / marks.length);
-  }, [marks]);
+    return Math.round(total / visibleMarks.length);
+  }, [visibleMarks]);
 
   const topPerformers = useMemo(() => {
     return students
@@ -88,13 +93,13 @@ export default function MarksPage() {
     <div className="space-y-6">
 
       <SectionHeader
-        title="Test & Marks Management"
-        subtitle="Track student academic performance and rankings"
+        title={user.role === "student" ? "My Test Results" : "Test & Marks Management"}
+        subtitle={user.role === "student" ? "Your academic performance across all subjects" : "Track student academic performance and rankings"}
       />
 
       <div className="grid gap-4 md:grid-cols-3">
-        <StatCard title="Total Tests" value={marks.length} />
-        <StatCard title="Students Evaluated" value={students.length} />
+        <StatCard title="Total Tests" value={visibleMarks.length} />
+        <StatCard title={user.role === "student" ? "Subjects" : "Students Evaluated"} value={user.role === "student" ? visibleMarks.length : students.length} />
         <StatCard title="Average Score %" value={avgMarks} />
       </div>
 
@@ -194,51 +199,84 @@ export default function MarksPage() {
         </form>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* Student view: full-width personal results only */}
+      {user.role === "student" && (
         <div className="card">
-          <h2 className="mb-4 text-xl font-bold text-slate-900">
-            Top Performers
-          </h2>
-          <Table
-            columns={[
-              { key: "studentId", label: "Student ID" },
-              { key: "name", label: "Student Name" },
-              { key: "average", label: "Average %" }
-            ]}
-            rows={topPerformers}
-          />
+          <h2 className="mb-4 text-xl font-bold text-slate-900">My Test Results</h2>
+          {visibleMarks.length === 0 ? (
+            <p className="text-slate-500 py-6 text-center">No test results recorded yet.</p>
+          ) : (
+            <Table
+              columns={[
+                { key: "subject", label: "Subject", render: (row) => row.subjectId?.subjectName },
+                { key: "testType", label: "Test Type" },
+                { key: "obtainedMarks", label: "Obtained" },
+                { key: "maxMarks", label: "Max" },
+                {
+                  key: "percent",
+                  label: "Score %",
+                  render: (row) => (
+                    <span className={`font-bold ${
+                      (row.obtainedMarks / row.maxMarks) * 100 >= 70
+                        ? "text-emerald-600"
+                        : (row.obtainedMarks / row.maxMarks) * 100 >= 40
+                        ? "text-amber-600"
+                        : "text-red-600"
+                    }`}>
+                      {Math.round((row.obtainedMarks / row.maxMarks) * 100)}%
+                    </span>
+                  )
+                },
+                { key: "examDate", label: "Date" }
+              ]}
+              rows={visibleMarks}
+            />
+          )}
         </div>
+      )}
 
-        <div className="card">
-          <h2 className="mb-4 text-xl font-bold text-slate-900">
-            Recent Test Results
-          </h2>
-          <Table
-            columns={[
-              { key: "student", label: "Student", render: (row) => row.studentId?.name },
-              { key: "subject", label: "Subject", render: (row) => row.subjectId?.subjectName },
-              { key: "testType", label: "Test Type" },
-              { key: "obtainedMarks", label: "Obtained" },
-              { key: "maxMarks", label: "Max" },
-              {
-                key: "actions",
-                label: "Actions",
-                render: (row) => (
-                  (user.role === "admin" || user.role === "teacher") && (
-                    <button 
+      {/* Admin/Teacher view: top performers + all results */}
+      {(user.role === "admin" || user.role === "teacher") && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="card">
+            <h2 className="mb-4 text-xl font-bold text-slate-900">Top Performers</h2>
+            <Table
+              columns={[
+                { key: "studentId", label: "Student ID" },
+                { key: "name", label: "Student Name" },
+                { key: "average", label: "Average %" }
+              ]}
+              rows={topPerformers}
+            />
+          </div>
+
+          <div className="card">
+            <h2 className="mb-4 text-xl font-bold text-slate-900">Recent Test Results</h2>
+            <Table
+              columns={[
+                { key: "student", label: "Student", render: (row) => row.studentId?.name },
+                { key: "subject", label: "Subject", render: (row) => row.subjectId?.subjectName },
+                { key: "testType", label: "Test Type" },
+                { key: "obtainedMarks", label: "Obtained" },
+                { key: "maxMarks", label: "Max" },
+                {
+                  key: "actions",
+                  label: "Actions",
+                  render: (row) => (
+                    <button
                       onClick={() => handleDelete(row._id)}
                       className="text-red-500 hover:underline text-xs font-bold"
                     >
                       Delete
                     </button>
                   )
-                )
-              }
-            ]}
-            rows={marks}
-          />
+                }
+              ]}
+              rows={visibleMarks}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
     </div>
   );

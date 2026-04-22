@@ -8,8 +8,9 @@ export default function LoginPage() {
   const { login, user, loading } = useAuth();
 
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("123456");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!loading && user) {
     return <Navigate to="/" replace />;
@@ -18,6 +19,7 @@ export default function LoginPage() {
   const submit = async (e) => {
     e.preventDefault();
     setError("");
+    setIsSubmitting(true);
 
     try {
       const response = await api.post("/auth/login", {
@@ -37,6 +39,8 @@ export default function LoginPage() {
       } else {
         setError("An error occurred during login. Please try again.");
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -90,8 +94,12 @@ export default function LoginPage() {
             </div>
           ) : null}
 
-          <button type="submit" className="btn-primary w-full">
-            Login
+          <button 
+            type="submit" 
+            className="btn-primary w-full"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Logging in..." : "Login"}
           </button>
         </form>
 
