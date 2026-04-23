@@ -55,16 +55,20 @@ export default function ClassesPage() {
     };
 
     try {
+      setLoading(true);
       if (editingId) {
         await api.put(`/classes/${editingId}`, payload);
       } else {
         await api.post("/classes", payload);
       }
-      fetchClasses();
+      // Re-fetch everything to be safe, but we also reset the form immediately
+      await fetchClasses();
       resetForm();
     } catch (err) {
       console.error("Failed to save class", err);
       alert(err.response?.data?.message || "Failed to save class");
+    } finally {
+      setLoading(false);
     }
   };
 
