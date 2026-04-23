@@ -17,11 +17,12 @@ router.get("/pending", protect, adminOnly, getPendingUsers);
 router.put("/:id/approve", protect, adminOnly, approveUser);
 
 router.route("/")
-  .get(protect, adminOnly, getUsers)
-  .post(protect, adminOnly, createUser);
+  .get(protect, teacherOrAdmin, getUsers)
+  .post(protect, teacherOrAdmin, createUser);
 
 router.route("/:id")
-  .put(protect, adminOnly, updateUser)
-  .delete(protect, adminOnly, deleteUser);
+  .put(protect, teacherOrAdmin, updateUser)
+  .delete(protect, teacherOrAdmin, deleteUser);
+
 
 export default router;

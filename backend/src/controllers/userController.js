@@ -57,6 +57,12 @@ export const updateUser = async (req, res) => {
     return res.status(404).json({ message: "User not found" });
   }
 
+  // Protection: Teachers can only modify students
+  if (req.user.role === "teacher" && user.role !== "student") {
+    return res.status(403).json({ message: "Teachers can only manage student records" });
+  }
+
+
   user.name = name ?? user.name;
   user.email = email ?? user.email;
   user.role = role ?? user.role;
@@ -90,6 +96,12 @@ export const deleteUser = async (req, res) => {
   if (req.user && req.user._id.toString() === user._id.toString()) {
     return res.status(400).json({ message: "You cannot delete your own account" });
   }
+
+  // Protection: Teachers can only delete students
+  if (req.user.role === "teacher" && user.role !== "student") {
+    return res.status(403).json({ message: "Teachers can only delete student records" });
+  }
+
 
   await user.deleteOne();
   res.json({ message: "User deleted successfully" });

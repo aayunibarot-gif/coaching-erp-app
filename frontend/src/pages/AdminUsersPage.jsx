@@ -548,7 +548,7 @@ export default function AdminUsersPage() {
                       >
                         Delete
                       </button>
-                      {row.role === "student" && (
+                      {(row.role === "student" || row.role === "teacher") && (
                         <button
                           type="button"
                           onClick={() => handleResetPassword(row)}
@@ -557,6 +557,7 @@ export default function AdminUsersPage() {
                           Reset Password
                         </button>
                       )}
+
                     </div>
                   )
                 }
