@@ -90,11 +90,11 @@ export default function DashboardPage() {
         />
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <StatCard title="Total Students" value={dashboardData.totalStudents || 0} hint="Active admissions" icon="👨‍🎓" />
-          <StatCard title="Faculty Members" value={dashboardData.totalTeachers || 0} hint="Teaching staff" icon="👩‍🏫" />
-          <StatCard title="Active Standards" value={dashboardData.classWiseDistribution?.length || 0} hint="Morning & evening batches" icon="📚" />
-          <StatCard title="Attendance %" value={dashboardData.overallAttendance || 0} hint="Overall attendance" icon="📝" />
-          <StatCard title="Pending Fees" value={dashboardData.pendingFeesCount || 0} hint="Students with dues" icon="💰" />
+          <StatCard title="Total Students" value={String(dashboardData.totalStudents || 0)} hint="Active admissions" icon="👨‍🎓" />
+          <StatCard title="Faculty Members" value={String(dashboardData.totalTeachers || 0)} hint="Teaching staff" icon="👩‍🏫" />
+          <StatCard title="Active Standards" value={String(dashboardData.classWiseDistribution?.length || 0)} hint="Morning & evening batches" icon="📚" />
+          <StatCard title="Attendance %" value={String(dashboardData.overallAttendance || 0)} hint="Overall attendance" icon="📝" />
+          <StatCard title="Pending Fees" value={String(dashboardData.pendingFeesCount || 0)} hint="Students with dues" icon="💰" />
         </div>
 
         <div className="grid gap-6 xl:grid-cols-3">
@@ -195,10 +195,10 @@ export default function DashboardPage() {
         />
 
         <div className="grid gap-4 md:grid-cols-4">
-          <StatCard title="Subjects Assigned" value={Array.isArray(dashboardData.assignedClasses) ? dashboardData.assignedClasses.length : 0} />
-          <StatCard title="Students" value={Array.isArray(dashboardData.studentsList) ? dashboardData.studentsList.length : 0} />
-          <StatCard title="Attendance Records" value={dashboardData.attendanceRecords || 0} />
-          <StatCard title="Tests Conducted" value={dashboardData.totalMarks || 0} />
+          <StatCard title="Subjects Assigned" value={String(Array.isArray(dashboardData.assignedClasses) ? dashboardData.assignedClasses.length : 0)} />
+          <StatCard title="Students" value={String(Array.isArray(dashboardData.studentsList) ? dashboardData.studentsList.length : 0)} />
+          <StatCard title="Attendance Records" value={String(dashboardData.attendanceRecords || 0)} />
+          <StatCard title="Tests Conducted" value={String(dashboardData.totalMarks || 0)} />
         </div>
 
         <div className="card">
