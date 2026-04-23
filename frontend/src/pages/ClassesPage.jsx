@@ -150,8 +150,16 @@ export default function ClassesPage() {
         <div className="card">
           <Table
             columns={[
-              { key: "standardName", label: "Standard" },
-              { key: "batch", label: "Batch" },
+              { 
+                key: "standardName", 
+                label: "Standard", 
+                render: (row) => row.standardName || "Unnamed Standard" 
+              },
+              { 
+                key: "batch", 
+                label: "Batch", 
+                render: (row) => row.batch || "Morning" 
+              },
               {
                 key: "actions",
                 label: "Actions",
