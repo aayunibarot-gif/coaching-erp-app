@@ -465,6 +465,7 @@ export default function DashboardPage() {
             <p className="text-slate-500">No test results to display.</p>
           )}
         </div>
+        </div>
       </div>
     );
   }

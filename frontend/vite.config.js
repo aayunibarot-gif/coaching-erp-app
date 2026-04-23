@@ -9,7 +9,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
+      includeAssets: ["logo.jpg", "icons/apple-touch-icon.png", "icons/icon-192x192.png"],
       manifest: {
         name: "Coaching ERP",
         short_name: "CoachERP",

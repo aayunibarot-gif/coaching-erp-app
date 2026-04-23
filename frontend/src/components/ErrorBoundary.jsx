@@ -41,7 +41,7 @@ class ErrorBoundary extends React.Component {
                 Clear Cache & Logout
               </button>
             </div>
-            {process.env.NODE_ENV === "development" && (
+            {import.meta.env.DEV && (
               <pre className="mt-6 overflow-auto rounded-xl bg-slate-900 p-4 text-left text-[10px] text-red-400">
                 {this.state.error?.toString()}
               </pre>
