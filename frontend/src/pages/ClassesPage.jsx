@@ -96,10 +96,15 @@ export default function ClassesPage() {
 
   return (
     <div className="space-y-6">
-      <SectionHeader
-        title="Standards"
-        subtitle="Manage coaching batches"
-      />
+      <div className="flex items-center justify-between">
+        <SectionHeader
+          title="Standards"
+          subtitle="Manage coaching batches"
+        />
+        <div className="rounded-full bg-indigo-50 px-4 py-2 text-sm font-bold text-indigo-600">
+          Total Standards Found: {rows.length}
+        </div>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
         <form onSubmit={submit} className="card space-y-4">
@@ -183,7 +188,11 @@ export default function ClassesPage() {
                 )
               }
             ]}
-            rows={rows}
+            rows={rows.map(r => ({
+              ...r,
+              standardName: r.standardName || r.name || "Unnamed",
+              batch: r.batch || "Not Specified"
+            }))}
           />
         </div>
       </div>
