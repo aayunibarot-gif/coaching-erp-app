@@ -519,6 +519,7 @@ export default function AdminUsersPage() {
                   label: "Parent Mobile",
                   render: (row) => row.parentPhone || "-"
                 },
+                {
                   key: "standard",
                   label: "Standard / Batch",
                   render: (row) => {
