@@ -1,10 +1,11 @@
-import bcrypt from "bcryptjs";
+import mongoose from "mongoose";
 import User from "../models/User.js";
 import Attendance from "../models/Attendance.js";
 import Mark from "../models/Mark.js";
 import Fee from "../models/Fee.js";
 import Remark from "../models/Remark.js";
 import { sendApprovalSuccessEmailToStudent } from "../utils/email.js";
+import { validateObjectId } from "../utils/validation.js";
 
 export const getUsers = async (req, res) => {
   const users = await User.find()
@@ -33,7 +34,7 @@ export const createUser = async (req, res) => {
     studentId,
     parentName,
     parentPhone,
-    classId: role === "student" ? classId || null : null,
+    classId: role === "student" ? validateObjectId(classId) : null,
     isApproved: true,
   });
 
@@ -61,7 +62,7 @@ export const updateUser = async (req, res) => {
   user.studentId = studentId ?? user.studentId;
   user.parentName = parentName ?? user.parentName;
   user.parentPhone = parentPhone ?? user.parentPhone;
-  user.classId = role === "student" ? classId || null : null;
+  user.classId = role === "student" ? validateClassId(classId) : null;
 
   if (password && password.trim()) {
     user.password = await bcrypt.hash(password, 10);

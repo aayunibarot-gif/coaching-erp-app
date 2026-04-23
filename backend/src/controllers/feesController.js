@@ -1,9 +1,10 @@
 import Fee from "../models/Fee.js";
+import { validateObjectId } from "../utils/validation.js";
 
 export async function listFees(req, res) {
   const filter = {};
-  if (req.query.studentId) filter.studentId = req.query.studentId;
-  if (req.query.classId) filter.classId = req.query.classId;
+  if (req.query.studentId) filter.studentId = validateObjectId(req.query.studentId);
+  if (req.query.classId) filter.classId = validateObjectId(req.query.classId);
 
   const fees = await Fee.find(filter)
     .populate("studentId", "name email")
@@ -12,7 +13,11 @@ export async function listFees(req, res) {
 }
 
 export async function createFee(req, res) {
-  const fee = await Fee.create(req.body);
+  const data = { ...req.body };
+  data.classId = validateObjectId(data.classId);
+  data.studentId = validateObjectId(data.studentId);
+  
+  const fee = await Fee.create(data);
   res.status(201).json(fee);
 }
 

@@ -1,7 +1,9 @@
+import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import { sendApprovalEmailToAdmin } from "../utils/email.js";
+import { validateObjectId } from "../utils/validation.js";
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -70,7 +72,7 @@ export const registerByAdmin = async (req, res) => {
       password: hashedPassword,
       role,
       phone,
-      classId: role === "student" ? classId || null : null,
+      classId: role === "student" ? validateObjectId(classId) : null,
     });
 
     const populated = await User.findById(user._id).populate("classId", "standardName");
@@ -101,9 +103,8 @@ export const register = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role: "student",
       phone,
-      classId: classId || null,
+      classId: validateObjectId(classId),
       isApproved: false,
     });
 

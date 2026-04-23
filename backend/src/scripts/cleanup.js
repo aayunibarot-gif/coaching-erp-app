@@ -12,21 +12,21 @@ dotenv.config({ path: path.join(__dirname, "../../.env") });
 async function cleanup() {
   try {
     await mongoose.connect(process.env.MONGO_URI);
-    console.log("Connected to MongoDB for cleanup...");
+    console.log("Connected to MongoDB for deeper cleanup...");
 
-    const users = await User.find({});
+    const allUsers = await User.find({}).lean();
+    console.log(`Checking ${allUsers.length} users...`);
+
     let fixedCount = 0;
-
-    for (const user of users) {
-      if (user.classId && !mongoose.Types.ObjectId.isValid(user.classId)) {
-        console.log(`Fixing invalid classId for user: ${user.email} (Value: ${user.classId})`);
-        user.classId = null;
-        await user.save();
+    for (const u of allUsers) {
+      if (u.classId && typeof u.classId === 'string' && u.classId.length < 10) {
+        console.log(`Found suspect classId "${u.classId}" for user ${u.email}. Resetting to null.`);
+        await User.updateOne({ _id: u._id }, { $set: { classId: null } });
         fixedCount++;
       }
     }
 
-    console.log(`Cleanup complete. Fixed ${fixedCount} users.`);
+    console.log(`Deeper cleanup complete. Fixed ${fixedCount} users.`);
     process.exit(0);
   } catch (error) {
     console.error("Cleanup failed:", error);
