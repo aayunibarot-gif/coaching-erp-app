@@ -11,6 +11,7 @@ export default function FeesPage() {
   const [students, setStudents] = useState([]);
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedClassId, setSelectedClassId] = useState("");
 
   const fetchData = async () => {
     try {
@@ -18,14 +19,21 @@ export default function FeesPage() {
         const feesRes = await api.get(`/fees?studentId=${user._id}`);
         setRows(feesRes.data);
       } else {
-        const [feesRes, usersRes, classesRes] = await Promise.all([
-          api.get("/fees"),
-          api.get("/users"),
-          api.get("/classes")
-        ]);
-        setRows(feesRes.data);
-        setStudents(usersRes.data.filter((u) => u.role === "student"));
-        setClasses(classesRes.data);
+        // Individualized requests for robustness
+        try {
+          const res = await api.get("/fees");
+          setRows(res.data);
+        } catch (e) { console.error("Fees fetch failed", e); }
+
+        try {
+          const res = await api.get("/users");
+          setStudents(res.data.filter((u) => u.role === "student"));
+        } catch (e) { console.error("Users fetch failed", e); }
+
+        try {
+          const res = await api.get("/classes");
+          setClasses(res.data);
+        } catch (e) { console.error("Classes fetch failed", e); }
       }
     } catch (err) {
       console.error("Failed to fetch data", err);
@@ -40,13 +48,18 @@ export default function FeesPage() {
 
   const visibleRows = rows;
 
+  const filteredStudents = useMemo(() => {
+    if (!selectedClassId) return [];
+    return students.filter((s) => (s.classId?._id || s.classId) === selectedClassId);
+  }, [students, selectedClassId]);
+
   const totals = useMemo(() => {
     const sourceRows = user.role === "student" ? visibleRows : rows;
     const totalCollection = sourceRows.reduce((sum, item) => sum + Number(item.paidAmount || 0), 0);
     const totalPending = sourceRows.reduce((sum, item) => sum + Number(item.pendingAmount || 0), 0);
     const partialCount = sourceRows.filter((item) => item.pendingAmount > 0 && item.paidAmount > 0).length;
     const overdueCount = sourceRows.filter(
-      (item) => item.pendingAmount > 0 && new Date(item.dueDate) < new Date("2026-05-15")
+      (item) => item.pendingAmount > 0 && new Date(item.dueDate) < new Date()
     ).length;
 
     return {
@@ -59,45 +72,45 @@ export default function FeesPage() {
 
   const [form, setForm] = useState({
     studentId: "",
-    classId: "",
     totalAmount: "",
     paidAmount: "",
     pendingAmount: "",
-    dueDate: "2026-05-10",
+    dueDate: new Date().toISOString().split("T")[0],
     status: "unpaid"
   });
 
+  // Auto-calculate pending amount
+  React.useEffect(() => {
+    const total = Number(form.totalAmount) || 0;
+    const paid = Number(form.paidAmount) || 0;
+    const pending = Math.max(0, total - paid);
+    
+    if (pending !== Number(form.pendingAmount)) {
+      setForm(prev => ({ ...prev, pendingAmount: pending }));
+    }
+  }, [form.totalAmount, form.paidAmount]);
+
   const submit = async (e) => {
     e.preventDefault();
-
-    const totalAmount = Number(form.totalAmount);
-    const paidAmount = Number(form.paidAmount);
-    const pendingAmount = Number(form.pendingAmount);
-
-    let status = form.status;
-    if (pendingAmount === 0 && paidAmount > 0) status = "paid";
-    else if (paidAmount > 0 && pendingAmount > 0) status = "partial";
-    else status = "unpaid";
+    if (!form.studentId || !selectedClassId) return;
 
     const payload = {
       studentId: form.studentId,
-      classId: form.classId,
-      totalAmount,
-      paidAmount,
-      pendingAmount,
+      classId: selectedClassId,
+      totalAmount: Number(form.totalAmount),
+      paidAmount: Number(form.paidAmount),
+      pendingAmount: Number(form.pendingAmount),
       dueDate: form.dueDate,
-      status
     };
 
     try {
       await api.post("/fees", payload);
       setForm({
         studentId: "",
-        classId: "",
         totalAmount: "",
         paidAmount: "",
         pendingAmount: "",
-        dueDate: "2026-05-10",
+        dueDate: new Date().toISOString().split("T")[0],
         status: "unpaid"
       });
       fetchData();
@@ -166,34 +179,43 @@ export default function FeesPage() {
           </div>
 
           <div>
-            <label className="label">Student</label>
+            <label className="label">Standard / Batch</label>
             <select
               className="input"
-              value={form.studentId}
-              onChange={(e) => setForm({ ...form, studentId: e.target.value })}
+              value={selectedClassId}
+              onChange={(e) => {
+                setSelectedClassId(e.target.value);
+                setForm({ ...form, studentId: "" });
+              }}
               required
             >
-              <option value="">Select student</option>
-              {students.map((s) => (
-                <option key={s._id} value={s._id}>
-                  {s.studentId} • {s.name}
+              <option value="">Select standard / batch</option>
+              {classes.length === 0 && (
+                <option disabled>No standards found. Please add them first.</option>
+              )}
+              {classes.map((c) => (
+                <option key={c._id} value={c._id}>
+                  {c.batchName || c.standardName}
                 </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="label">Standard</label>
+            <label className="label">Student</label>
             <select
               className="input"
-              value={form.classId}
-              onChange={(e) => setForm({ ...form, classId: e.target.value })}
+              value={form.studentId}
+              onChange={(e) => setForm({ ...form, studentId: e.target.value })}
               required
+              disabled={!selectedClassId}
             >
-              <option value="">Select standard</option>
-              {classes.map((c) => (
-                <option key={c._id} value={c._id}>
-                  {c.standardName}
+              <option value="">
+                {!selectedClassId ? "Select standard first" : "Select student"}
+              </option>
+              {filteredStudents.map((s) => (
+                <option key={s._id} value={s._id}>
+                  {s.studentId} • {s.name}
                 </option>
               ))}
             </select>
@@ -227,8 +249,8 @@ export default function FeesPage() {
               className="input"
               type="number"
               value={form.pendingAmount}
-              onChange={(e) => setForm({ ...form, pendingAmount: e.target.value })}
-              required
+              readOnly
+              className="input bg-slate-50"
             />
           </div>
 
@@ -239,6 +261,7 @@ export default function FeesPage() {
               type="date"
               value={form.dueDate}
               onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
+              required
             />
           </div>
 
@@ -283,11 +306,11 @@ export default function FeesPage() {
             {
               key: "class",
               label: "Standard",
-              render: (row) => row.classId?.standardName || "-"
+              render: (row) => row.classId?.batchName || row.classId?.standardName || "-"
             },
-            { key: "totalAmount", label: "Total Fee" },
-            { key: "paidAmount", label: "Paid" },
-            { key: "pendingAmount", label: "Pending" },
+            { key: "totalAmount", label: "Total Fee", render: (row) => `₹${row.totalAmount}` },
+            { key: "paidAmount", label: "Paid", render: (row) => `₹${row.paidAmount}` },
+            { key: "pendingAmount", label: "Pending", render: (row) => `₹${row.pendingAmount}` },
             { key: "dueDate", label: "Due Date" },
             {
               key: "status",
