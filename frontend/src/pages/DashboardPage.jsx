@@ -22,7 +22,7 @@ export default function DashboardPage() {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   
-  // Student profile state (even if not student, hooks must always run)
+  // Student profile state
   const profileStorageKey = user ? `student_profile_${user._id}` : "temp_profile";
   const [profile, setProfile] = useState({
     name: user?.name || "",
@@ -135,12 +135,15 @@ export default function DashboardPage() {
     }
   };
 
-  // 2. NOW WE CAN DO CONDITIONAL RENDERING SAFELY
-  if (!user) return null;
-  if (loading) return <div className="card text-center p-12">Loading dashboard...</div>;
+  // 2. PREPARE CONTENT SAFELY
+  let content = null;
 
-  if (user.role === "admin" && dashboardData) {
-    return (
+  if (!user) {
+    content = null;
+  } else if (loading) {
+    content = <div className="card text-center p-12 text-slate-500 font-bold">Loading dashboard data...</div>;
+  } else if (user.role === "admin" && dashboardData) {
+    content = (
       <div className="space-y-6">
         <SectionHeader
           title="Coaching Institute Dashboard"
@@ -188,7 +191,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {pendingUsers.length > 0 && (
+        {Array.isArray(pendingUsers) && pendingUsers.length > 0 && (
           <div className="card">
             <h2 className="mb-4 text-xl font-bold text-slate-900">Pending Approvals</h2>
             <Table
@@ -242,10 +245,8 @@ export default function DashboardPage() {
         </div>
       </div>
     );
-  }
-
-  if (user.role === "teacher" && dashboardData) {
-    return (
+  } else if (user.role === "teacher" && dashboardData) {
+    content = (
       <div className="space-y-6">
         <SectionHeader
           title="Faculty Dashboard"
@@ -278,15 +279,12 @@ export default function DashboardPage() {
         </div>
       </div>
     );
-  }
+  } else if (user.role === "student") {
+    const studentMarks = dashboardData?.marks || [];
+    const studentFees = dashboardData?.fees || null;
+    const studentAttendancePercent = dashboardData?.attendancePercent || 0;
 
-  // If student or fallback
-  const studentMarks = dashboardData?.marks || [];
-  const studentFees = dashboardData?.fees || null;
-  const studentAttendancePercent = dashboardData?.attendancePercent || 0;
-
-  if (user.role === "student") {
-    return (
+    content = (
       <div className="space-y-6">
         <SectionHeader
           title="Student Dashboard"
@@ -481,13 +479,14 @@ export default function DashboardPage() {
         </div>
       </div>
     );
+  } else {
+    content = (
+      <div className="card text-center p-12">
+        <h2 className="text-xl font-bold text-slate-900">Welcome to Eduverse Coaching</h2>
+        <p className="text-slate-500 mt-2">Preparing your dashboard...</p>
+      </div>
+    );
   }
 
-  // Fallback
-  return (
-    <div className="card text-center p-12">
-      <h2 className="text-xl font-bold text-slate-900">Welcome to Eduverse Coaching</h2>
-      <p className="text-slate-500 mt-2">Loading your dashboard contents...</p>
-    </div>
-  );
+  return content;
 }
