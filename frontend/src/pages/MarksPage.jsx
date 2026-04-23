@@ -18,7 +18,9 @@ export default function MarksPage() {
   const { user } = useAuth();
   const [marks, setMarks] = useState([]);
   const [students, setStudents] = useState([]);
+  const [classes, setClasses] = useState([]);
   const [subjects, setSubjects] = useState([]);
+  const [selectedClassId, setSelectedClassId] = useState("");
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
@@ -27,14 +29,16 @@ export default function MarksPage() {
         const marksRes = await api.get(`/marks?studentId=${user._id}`);
         setMarks(marksRes.data);
       } else {
-        const [marksRes, usersRes, subjectsRes] = await Promise.all([
+        const [marksRes, usersRes, subjectsRes, classesRes] = await Promise.all([
           api.get("/marks"),
           api.get("/users"),
-          api.get("/subjects")
+          api.get("/subjects"),
+          api.get("/classes")
         ]);
         setMarks(marksRes.data);
         setStudents(usersRes.data.filter((u) => u.role === "student"));
         setSubjects(subjectsRes.data);
+        setClasses(classesRes.data);
       }
     } catch (err) {
       console.error("Failed to fetch data", err);
@@ -94,6 +98,16 @@ export default function MarksPage() {
       .sort((a, b) => b.average - a.average)
       .slice(0, 5);
   }, [marks, students]);
+
+  const filteredStudents = useMemo(() => {
+    if (!selectedClassId) return [];
+    return students.filter((s) => s.classId?._id === selectedClassId || s.classId === selectedClassId);
+  }, [students, selectedClassId]);
+
+  const filteredSubjects = useMemo(() => {
+    if (!selectedClassId) return [];
+    return subjects.filter((s) => (s.classId?._id || s.classId) === selectedClassId);
+  }, [subjects, selectedClassId]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -158,15 +172,38 @@ export default function MarksPage() {
           </div>
 
           <div>
+            <label className="label">Standard / Batch</label>
+            <select
+              className="input"
+              value={selectedClassId}
+              onChange={(e) => {
+                setSelectedClassId(e.target.value);
+                setForm({ ...form, studentId: "", subjectId: "" }); // Reset student and subject when class changes
+              }}
+              required
+            >
+              <option value="">Select standard / batch</option>
+              {classes.map((cls) => (
+                <option key={cls._id} value={cls._id}>
+                  {cls.batchName || cls.standardName}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
             <label className="label">Student</label>
             <select
               className="input"
               value={form.studentId}
               onChange={(e) => setForm({ ...form, studentId: e.target.value })}
               required
+              disabled={!selectedClassId}
             >
-              <option value="">Select student</option>
-              {students.map((s) => (
+              <option value="">
+                {!selectedClassId ? "Select standard first" : "Select student"}
+              </option>
+              {filteredStudents.map((s) => (
                 <option key={s._id} value={s._id}>
                   {s.studentId} • {s.name}
                 </option>
@@ -181,9 +218,12 @@ export default function MarksPage() {
               value={form.subjectId}
               onChange={(e) => setForm({ ...form, subjectId: e.target.value })}
               required
+              disabled={!selectedClassId}
             >
-              <option value="">Select subject</option>
-              {subjects.map((s) => (
+              <option value="">
+                {!selectedClassId ? "Select standard first" : "Select subject"}
+              </option>
+              {filteredSubjects.map((s) => (
                 <option key={s._id} value={s._id}>
                   {s.subjectName}
                 </option>
