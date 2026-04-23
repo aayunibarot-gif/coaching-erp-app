@@ -8,7 +8,7 @@ import {
   getAllMaterials,
   deleteMaterial,
 } from "../controllers/materialController.js";
-import { protect, teacherOnly } from "../middleware/authMiddleware.js";
+import { protect, authorize } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -46,7 +46,7 @@ const upload = multer({
 router.get("/all", protect, getAllMaterials);
 router.get("/class/:classId", protect, getMaterialsByClass);
 
-router.post("/", protect, teacherOnly, upload.single("pdf"), uploadMaterial);
+router.post("/", protect, authorize("teacher", "admin"), upload.single("pdf"), uploadMaterial);
 router.delete("/:id", protect, deleteMaterial);
 
 export default router;
