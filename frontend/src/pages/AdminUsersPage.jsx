@@ -45,22 +45,32 @@ export default function AdminUsersPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [rows, setRows] = useState(() => {
-    const saved = localStorage.getItem("erp_users");
-    return saved ? JSON.parse(saved) : demoUsers;
-  });
-
+  const [rows, setRows] = useState([]);
   const [form, setForm] = useState(initialForm);
   const [editingId, setEditingId] = useState(null);
   const [selectedStandard, setSelectedStandard] = useState("all");
   const [search, setSearch] = useState("");
-  const [passwordMode, setPasswordMode] = useState(null); // null | 'manual' | 'generate'
+  const [passwordMode, setPasswordMode] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await api.get("/users");
+      setRows(response.data);
+    } catch (error) {
+      console.error("Failed to fetch users", error);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
 
   useEffect(() => {
-    localStorage.setItem("erp_users", JSON.stringify(rows));
-  }, [rows]);
+    if (user.role === "admin" || user.role === "teacher") {
+      fetchUsers();
+    }
+  }, [user.role]);
 
   if (user.role !== "admin" && user.role !== "teacher") {
     return <div className="card">Only admin and teacher can manage students.</div>;
@@ -84,52 +94,42 @@ export default function AdminUsersPage() {
     return `FAC${String(2000 + teacherCount)}`;
   };
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
 
-    const selectedClass = demoClasses.find((c) => c._id === form.classId) || null;
-
-    if (editingId) {
-      setRows((prev) =>
-        prev.map((item) =>
-          item._id === editingId
-            ? {
-                ...item,
-                name: form.name,
-                email: form.email,
-                role: form.role,
-                phone: form.phone,
-                parentName: form.parentName,
-                parentPhone: form.parentPhone,
-                classId: form.role === "student" ? selectedClass : null
-              }
-            : item
-        )
-      );
-      resetForm();
-      return;
-    }
-
-    const newUser = {
-      _id: `u${Date.now()}`,
-      studentId:
-        form.role === "student"
-          ? generateStudentId()
-          : form.role === "teacher"
-          ? generateTeacherId()
-          : `ADM${Date.now().toString().slice(-3)}`,
+    const payload = {
       name: form.name,
       email: form.email,
       role: form.role,
       phone: form.phone,
       parentName: form.role === "student" ? form.parentName : "",
       parentPhone: form.role === "student" ? form.parentPhone : "",
-      classId: form.role === "student" ? selectedClass : null,
-      admissionDate: "2026-04-18"
+      classId: form.role === "student" && form.classId ? form.classId : null,
     };
 
-    setRows((prev) => [newUser, ...prev]);
-    resetForm();
+    if (form.password) {
+      payload.password = form.password;
+    } else if (!editingId) {
+      alert("Password is required for new users");
+      return;
+    }
+
+    if (!editingId) {
+      payload.studentId = form.role === "student" ? generateStudentId() : generateTeacherId();
+    }
+
+    try {
+      if (editingId) {
+        await api.put(`/users/${editingId}`, payload);
+      } else {
+        await api.post("/users", payload);
+      }
+      fetchUsers();
+      resetForm();
+    } catch (err) {
+      console.error("Failed to save user", err);
+      alert(err.response?.data?.message || "Failed to save user");
+    }
   };
 
   const handleEdit = (row) => {
@@ -146,14 +146,17 @@ export default function AdminUsersPage() {
     });
   };
 
-  const handleDelete = (rowId) => {
+  const handleDelete = async (rowId) => {
     const confirmDelete = window.confirm("Are you sure you want to delete this record?");
     if (!confirmDelete) return;
 
-    setRows((prev) => prev.filter((item) => item._id !== rowId));
-
-    if (editingId === rowId) {
-      resetForm();
+    try {
+      await api.delete(`/users/${rowId}`);
+      fetchUsers();
+      if (editingId === rowId) resetForm();
+    } catch (err) {
+      console.error("Failed to delete user", err);
+      alert(err.response?.data?.message || "Failed to delete user");
     }
   };
 

@@ -15,7 +15,7 @@ export const getUsers = async (req, res) => {
 };
 
 export const createUser = async (req, res) => {
-  const { name, email, password, role, phone, classId } = req.body;
+  const { name, email, password, role, phone, classId, studentId, parentName, parentPhone } = req.body;
 
   const exists = await User.findOne({ email });
   if (exists) {
@@ -30,6 +30,9 @@ export const createUser = async (req, res) => {
     password: hashedPassword,
     role,
     phone,
+    studentId,
+    parentName,
+    parentPhone,
     classId: role === "student" ? classId || null : null,
   });
 
@@ -42,7 +45,7 @@ export const createUser = async (req, res) => {
 };
 
 export const updateUser = async (req, res) => {
-  const { name, email, password, role, phone, classId } = req.body;
+  const { name, email, password, role, phone, classId, studentId, parentName, parentPhone } = req.body;
 
   const user = await User.findById(req.params.id);
 
@@ -54,6 +57,9 @@ export const updateUser = async (req, res) => {
   user.email = email ?? user.email;
   user.role = role ?? user.role;
   user.phone = phone ?? user.phone;
+  user.studentId = studentId ?? user.studentId;
+  user.parentName = parentName ?? user.parentName;
+  user.parentPhone = parentPhone ?? user.parentPhone;
   user.classId = role === "student" ? classId || null : null;
 
   if (password && password.trim()) {

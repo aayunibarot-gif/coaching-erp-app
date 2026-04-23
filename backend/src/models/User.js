@@ -32,6 +32,21 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
+    studentId: {
+      type: String,
+      default: "",
+    },
+
+    parentName: {
+      type: String,
+      default: "",
+    },
+
+    parentPhone: {
+      type: String,
+      default: "",
+    },
+
     classId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Class",
