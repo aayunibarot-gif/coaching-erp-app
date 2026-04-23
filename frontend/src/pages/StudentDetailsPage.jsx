@@ -111,7 +111,7 @@ export default function StudentDetailsPage() {
               {
                 key: "subject",
                 label: "Subject",
-                render: (row) => row.subjectId.subjectName,
+                render: (row) => row.subjectId?.subjectName || "Deleted Subject",
               },
               { key: "testType", label: "Test Type" },
               { key: "obtainedMarks", label: "Obtained" },

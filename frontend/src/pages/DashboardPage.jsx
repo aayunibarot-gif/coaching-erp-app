@@ -232,22 +232,26 @@ export default function DashboardPage() {
   });
 
   useEffect(() => {
-    const savedProfile = localStorage.getItem(profileStorageKey);
-    if (savedProfile) {
-      setProfile(JSON.parse(savedProfile));
-    } else {
-      const initialProfile = {
-        name: user.name || "",
-        mobile: user.phone || "",
-        dob: "",
-        gender: "",
-        standard: user.classId?.standardName || "",
-        batch: user.classId?.batch || "",
-        parentName: user.parentName || "",
-        parentPhone: user.parentPhone || "",
-      };
-      setProfile(initialProfile);
-      localStorage.setItem(profileStorageKey, JSON.stringify(initialProfile));
+    try {
+      const savedProfile = localStorage.getItem(profileStorageKey);
+      if (savedProfile) {
+        setProfile(JSON.parse(savedProfile));
+      } else {
+        const initialProfile = {
+          name: user.name || "",
+          mobile: user.phone || "",
+          dob: "",
+          gender: "",
+          standard: user.classId?.standardName || "",
+          batch: user.classId?.batch || "",
+          parentName: user.parentName || "",
+          parentPhone: user.parentPhone || "",
+        };
+        setProfile(initialProfile);
+        localStorage.setItem(profileStorageKey, JSON.stringify(initialProfile));
+      }
+    } catch (e) {
+      console.error("Profile parsing error", e);
     }
   }, [profileStorageKey, user]);
 
@@ -268,8 +272,9 @@ export default function DashboardPage() {
     }
   };
 
-  return (
-    <div className="space-y-6">
+  if (user.role === "student") {
+    return (
+      <div className="space-y-6">
       <SectionHeader
         title="Student Dashboard"
         subtitle="Your profile, attendance, marks and fee summary"
@@ -405,7 +410,7 @@ export default function DashboardPage() {
           <h2 className="mb-4 text-xl font-bold text-slate-900">Latest Marks</h2>
           <Table
             columns={[
-              { key: "subject", label: "Subject", render: (row) => row.subjectId.subjectName },
+              { key: "subject", label: "Subject", render: (row) => row.subjectId?.subjectName || "Deleted Subject" },
               { key: "testType", label: "Test Type" },
               { key: "obtainedMarks", label: "Obtained" },
               { key: "maxMarks", label: "Max" },
@@ -442,7 +447,7 @@ export default function DashboardPage() {
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={studentMarks.map(m => ({
-                  subject: m.subjectId.subjectName,
+                  subject: m.subjectId?.subjectName || "Deleted Subject",
                   score: Math.round((m.obtainedMarks / m.maxMarks) * 100)
                 }))}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -461,6 +466,13 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="card text-center p-12">
+      <h2 className="text-xl font-bold text-slate-900">Welcome to Eduverse Coaching</h2>
+      <p className="text-slate-500 mt-2">Loading your dashboard contents...</p>
     </div>
   );
 }
