@@ -196,7 +196,7 @@ export default function TimetablePage() {
                 <option value="">Select standard / batch</option>
                 {classes.map((item) => (
                   <option key={item._id} value={item._id}>
-                    {item.batchName}
+                    {item.batchName || item.standardName}
                   </option>
                 ))}
               </select>

@@ -1,31 +1,47 @@
 import Timetable from "../models/Timetable.js";
-import ClassModel from "../models/Class.js";
 
 export async function listTimetable(req, res) {
-  if (!req.query.classId) {
-    return res.status(400).json({ message: "classId is required." });
-  }
+  try {
+    const filter = req.query.classId ? { classId: req.query.classId } : {};
+    const items = await Timetable.find(filter)
+      .populate("classId", "standardName batch batchName")
+      .sort({ createdAt: -1 });
 
-  const classObj = await ClassModel.findById(req.query.classId);
-  const items = await Timetable.find({ classId: req.query.classId }).populate("periods.subjectId", "subjectName");
-  res.json({
-    classInfo: classObj,
-    schedule: items
-  });
+    res.json(items);
+  } catch (error) {
+    console.error("List Timetable Error:", error);
+    res.status(500).json({ message: "Failed to fetch timetable." });
+  }
 }
 
-export async function upsertTimetable(req, res) {
-  const { classId, day, periods } = req.body;
-  const item = await Timetable.findOneAndUpdate(
-    { classId, day },
-    { classId, day, periods },
-    { upsert: true, new: true }
-  );
-  res.json(item);
+export async function createTimetable(req, res) {
+  try {
+    const item = await Timetable.create(req.body);
+    res.status(201).json(item);
+  } catch (error) {
+    console.error("Create Timetable Error:", error);
+    res.status(500).json({ message: "Failed to create timetable entry." });
+  }
+}
+
+export async function updateTimetable(req, res) {
+  try {
+    const updated = await Timetable.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!updated) return res.status(404).json({ message: "Timetable entry not found." });
+    res.json(updated);
+  } catch (error) {
+    console.error("Update Timetable Error:", error);
+    res.status(500).json({ message: "Failed to update timetable entry." });
+  }
 }
 
 export async function deleteTimetableDay(req, res) {
-  const deleted = await Timetable.findByIdAndDelete(req.params.id);
-  if (!deleted) return res.status(404).json({ message: "Timetable row not found." });
-  res.json({ message: "Deleted successfully." });
+  try {
+    const deleted = await Timetable.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ message: "Timetable entry not found." });
+    res.json({ message: "Deleted successfully." });
+  } catch (error) {
+    console.error("Delete Timetable Error:", error);
+    res.status(500).json({ message: "Failed to delete timetable entry." });
+  }
 }
