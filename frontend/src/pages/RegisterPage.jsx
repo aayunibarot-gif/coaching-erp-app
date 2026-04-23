@@ -83,9 +83,15 @@ export default function RegisterPage() {
             <label className="label">Phone Number</label>
             <input
               className="input"
+              type="tel"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              placeholder="Enter phone number"
+              placeholder="Enter 10-digit phone number"
+              pattern="[0-9]{10}"
+              maxLength="10"
+              minLength="10"
+              title="Please enter a valid 10-digit mobile number"
+              required
             />
           </div>
 

@@ -309,9 +309,14 @@ export default function DashboardPage() {
               <label className="label">Mobile Number</label>
               <input
                 className="input"
+                type="tel"
                 value={profile.mobile}
                 onChange={(e) => setProfile({ ...profile, mobile: e.target.value })}
-                placeholder="Enter mobile number"
+                placeholder="Enter 10-digit mobile number"
+                pattern="[0-9]{10}"
+                maxLength="10"
+                minLength="10"
+                title="Please enter a valid 10-digit mobile number"
               />
             </div>
 
@@ -322,6 +327,7 @@ export default function DashboardPage() {
                 className="input"
                 value={profile.dob}
                 onChange={(e) => setProfile({ ...profile, dob: e.target.value })}
+                max={new Date().toISOString().split("T")[0]}
               />
             </div>
 

@@ -84,9 +84,13 @@ export default function ProfilePage() {
               <input
                 className="input"
                 type="tel"
-                placeholder="Enter your mobile number"
+                placeholder="Enter 10-digit mobile number"
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                pattern="[0-9]{10}"
+                maxLength="10"
+                minLength="10"
+                title="Please enter a valid 10-digit mobile number"
               />
             </div>
             <div>
@@ -104,9 +108,13 @@ export default function ProfilePage() {
               <input
                 className="input"
                 type="tel"
-                placeholder="Enter parent mobile"
+                placeholder="Enter 10-digit parent mobile"
                 value={form.parentPhone}
                 onChange={(e) => setForm({ ...form, parentPhone: e.target.value })}
+                pattern="[0-9]{10}"
+                maxLength="10"
+                minLength="10"
+                title="Please enter a valid 10-digit mobile number"
               />
             </div>
 
