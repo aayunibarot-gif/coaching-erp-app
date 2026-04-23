@@ -29,16 +29,26 @@ export default function MarksPage() {
         const marksRes = await api.get(`/marks?studentId=${user._id}`);
         setMarks(marksRes.data);
       } else {
-        const [marksRes, usersRes, subjectsRes, classesRes] = await Promise.all([
-          api.get("/marks"),
-          api.get("/users"),
-          api.get("/subjects"),
-          api.get("/classes")
-        ]);
-        setMarks(marksRes.data);
-        setStudents(usersRes.data.filter((u) => u.role === "student"));
-        setSubjects(subjectsRes.data);
-        setClasses(classesRes.data);
+        // Individualized requests to avoid one failure blocking all data
+        try {
+          const res = await api.get("/marks");
+          setMarks(res.data);
+        } catch (e) { console.error("Marks fetch failed", e); }
+
+        try {
+          const res = await api.get("/users");
+          setStudents(res.data.filter((u) => u.role === "student"));
+        } catch (e) { console.error("Users fetch failed", e); }
+
+        try {
+          const res = await api.get("/subjects");
+          setSubjects(res.data);
+        } catch (e) { console.error("Subjects fetch failed", e); }
+
+        try {
+          const res = await api.get("/classes");
+          setClasses(res.data);
+        } catch (e) { console.error("Classes fetch failed", e); }
       }
     } catch (err) {
       console.error("Failed to fetch data", err);
@@ -77,7 +87,7 @@ export default function MarksPage() {
     return students
       .map((student) => {
         const studentMarks = marks.filter(
-          (m) => (m.studentId._id || m.studentId) === student._id
+          (m) => (m.studentId?._id || m.studentId) === student._id
         );
 
         const avg = studentMarks.length
