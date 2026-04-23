@@ -8,7 +8,8 @@ import {
   getPendingUsers,
   approveUser,
 } from "../controllers/userController.js";
-import { adminOnly, protect } from "../middleware/authMiddleware.js";
+import { adminOnly, protect, teacherOrAdmin } from "../middleware/authMiddleware.js";
+
 
 const router = express.Router();
 
