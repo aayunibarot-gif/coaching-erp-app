@@ -21,6 +21,8 @@ export default function Layout() {
   const { user, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  if (!user) return null;
+
   const toggleMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
   return (

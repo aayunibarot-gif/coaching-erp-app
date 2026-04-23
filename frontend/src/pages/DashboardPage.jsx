@@ -20,6 +20,8 @@ export default function DashboardPage() {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  if (!user) return null;
+
   // Fetch all required dashboard data
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -454,7 +456,7 @@ export default function DashboardPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={studentMarks.map(m => ({
                   subject: m.subjectId?.subjectName || "Deleted Subject",
-                  score: Math.round((m.obtainedMarks / m.maxMarks) * 100)
+                  score: m.maxMarks > 0 ? Math.round((m.obtainedMarks / m.maxMarks) * 100) : 0
                 }))}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                   <XAxis dataKey="subject" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
