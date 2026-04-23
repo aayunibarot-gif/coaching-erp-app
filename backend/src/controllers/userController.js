@@ -8,6 +8,7 @@ import bcrypt from "bcryptjs";
 import { sendApprovalSuccessEmailToStudent } from "../utils/email.js";
 import { validateObjectId } from "../utils/validation.js";
 
+// Controller to manage user records
 export const getUsers = async (req, res) => {
   const users = await User.find()
     .populate("classId", "standardName batch batchName timingStart timingEnd")
