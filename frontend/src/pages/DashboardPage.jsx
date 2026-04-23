@@ -246,6 +246,8 @@ export default function DashboardPage() {
     gender: "",
     standard: user.classId?.standardName || "",
     batch: user.classId?.batch || "",
+    parentName: user.parentName || "",
+    parentPhone: user.parentPhone || "",
   });
 
   useEffect(() => {
@@ -260,6 +262,8 @@ export default function DashboardPage() {
         gender: "",
         standard: user.classId?.standardName || "",
         batch: user.classId?.batch || "",
+        parentName: user.parentName || "",
+        parentPhone: user.parentPhone || "",
       };
       setProfile(initialProfile);
       localStorage.setItem(profileStorageKey, JSON.stringify(initialProfile));
@@ -353,6 +357,31 @@ export default function DashboardPage() {
             <div>
               <label className="label">Batch</label>
               <input className="input" value={profile.batch} disabled />
+            </div>
+
+            <div>
+              <label className="label">Parent Name</label>
+              <input
+                className="input"
+                value={profile.parentName}
+                onChange={(e) => setProfile({ ...profile, parentName: e.target.value })}
+                placeholder="Enter parent name"
+              />
+            </div>
+
+            <div>
+              <label className="label">Parent Mobile</label>
+              <input
+                className="input"
+                type="tel"
+                value={profile.parentPhone}
+                onChange={(e) => setProfile({ ...profile, parentPhone: e.target.value })}
+                placeholder="Enter 10-digit parent mobile"
+                pattern="[0-9]{10}"
+                maxLength="10"
+                minLength="10"
+                title="Please enter a valid 10-digit mobile number"
+              />
             </div>
 
             <div className="md:col-span-2">

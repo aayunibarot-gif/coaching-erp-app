@@ -145,6 +145,7 @@ export default function AdminUsersPage() {
       parentPhone: row.parentPhone || "",
       classId: row.classId?._id || ""
     });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleDelete = async (rowId) => {
@@ -161,9 +162,19 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleResetPassword = (row) => {
-    const newPassword = `${row.studentId || "USER"}@123`;
-    alert(`Password reset successfully for ${row.name}\n\nNew Password: ${newPassword}`);
+  const handleResetPassword = async (row) => {
+    const confirmReset = window.confirm(`Are you sure you want to reset the password for ${row.name}?`);
+    if (!confirmReset) return;
+
+    const newPassword = generateStrongPassword();
+
+    try {
+      await api.put(`/users/${row._id}`, { password: newPassword });
+      alert(`Password reset successfully for ${row.name}\n\nNew Password: ${newPassword}\n\nPlease copy this password and share it with the user securely.`);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to reset password.");
+    }
   };
 
   const filteredRows = useMemo(() => {

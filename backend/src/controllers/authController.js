@@ -40,6 +40,9 @@ export const login = async (req, res) => {
         email: user.email,
         role: user.role,
         phone: user.phone || "",
+        studentId: user.studentId || "",
+        parentName: user.parentName || "",
+        parentPhone: user.parentPhone || "",
         classId: user.classId || null,
       },
     });
