@@ -3,25 +3,45 @@ import SectionHeader from "../components/SectionHeader";
 import Table from "../components/Table";
 import StatCard from "../components/StatCard";
 import { useAuth } from "../context/AuthContext";
-import { demoClasses, demoSubjects, demoUsers } from "../data/demo-data";
+import api from "../api/axios";
 
 export default function SubjectsPage() {
   const { user } = useAuth();
 
-  const storedUsers = useMemo(() => {
-    const saved = localStorage.getItem("erp_users");
-    return saved ? JSON.parse(saved) : demoUsers;
-  }, []);
+  const [teachers, setTeachers] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const teachers = storedUsers.filter((u) => u.role === "teacher");
-
-  const [rows, setRows] = useState(demoSubjects);
   const [form, setForm] = useState({
     classId: "",
     subjectName: "",
     teacherId: ""
   });
   const [editingId, setEditingId] = useState(null);
+
+  const fetchData = async () => {
+    try {
+      const [subjectsRes, classesRes, usersRes] = await Promise.all([
+        api.get("/subjects"),
+        api.get("/classes"),
+        api.get("/users")
+      ]);
+      setRows(subjectsRes.data);
+      setClasses(classesRes.data);
+      setTeachers(usersRes.data.filter((u) => u.role === "teacher"));
+    } catch (err) {
+      console.error("Failed to fetch data", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    if (user.role === "admin" || user.role === "teacher") {
+      fetchData();
+    }
+  }, [user.role]);
 
   if (user.role !== "admin" && user.role !== "teacher") {
     return <div className="card">Only admin and teacher can manage subjects.</div>;
@@ -32,35 +52,27 @@ export default function SubjectsPage() {
     setEditingId(null);
   };
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
 
-    const cls = demoClasses.find((c) => c._id === form.classId);
-    const teacher = teachers.find((t) => t._id === form.teacherId);
-
     const payload = {
-      classId: cls,
+      classId: form.classId,
       subjectName: form.subjectName,
-      teacherId: teacher || null
+      teacherId: form.teacherId || null
     };
 
-    if (editingId) {
-      setRows((prev) =>
-        prev.map((item) => (item._id === editingId ? { ...item, ...payload } : item))
-      );
-      resetForm();
-      return;
-    }
-
-    setRows((prev) => [
-      ...prev,
-      {
-        _id: `s${Date.now()}`,
-        ...payload
+    try {
+      if (editingId) {
+        await api.put(`/subjects/${editingId}`, payload);
+      } else {
+        await api.post("/subjects", payload);
       }
-    ]);
-
-    resetForm();
+      fetchData();
+      resetForm();
+    } catch (err) {
+      console.error("Failed to save subject", err);
+      alert(err.response?.data?.message || "Failed to save subject");
+    }
   };
 
   const handleEdit = (row) => {
@@ -72,11 +84,18 @@ export default function SubjectsPage() {
     });
   };
 
-  const handleDelete = (rowId) => {
+  const handleDelete = async (rowId) => {
     const confirmDelete = window.confirm("Delete this subject?");
     if (!confirmDelete) return;
-    setRows((prev) => prev.filter((item) => item._id !== rowId));
-    if (editingId === rowId) resetForm();
+
+    try {
+      await api.delete(`/subjects/${rowId}`);
+      fetchData();
+      if (editingId === rowId) resetForm();
+    } catch (err) {
+      console.error("Failed to delete subject", err);
+      alert(err.response?.data?.message || "Failed to delete subject");
+    }
   };
 
   return (
@@ -89,7 +108,7 @@ export default function SubjectsPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <StatCard title="Total Subjects" value={rows.length} />
         <StatCard title="Total Teachers" value={teachers.length} />
-        <StatCard title="Standards / Batches" value={demoClasses.length} />
+        <StatCard title="Standards / Batches" value={classes.length} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
@@ -107,7 +126,7 @@ export default function SubjectsPage() {
               required
             >
               <option value="">Select standard / batch</option>
-              {demoClasses.map((cls) => (
+              {classes.map((cls) => (
                 <option key={cls._id} value={cls._id}>
                   {cls.batchName}
                 </option>

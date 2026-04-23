@@ -1,44 +1,81 @@
 import React, { useState } from "react";
 import SectionHeader from "../components/SectionHeader";
-import { demoClasses, demoNotices, demoUsers } from "../data/demo-data";
 import { useAuth } from "../context/AuthContext";
+import api from "../api/axios";
 
 export default function NoticesPage() {
   const { user } = useAuth();
-  const [notices, setNotices] = useState(demoNotices);
+  const [notices, setNotices] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [students, setStudents] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
   
   const [form, setForm] = useState({
     title: "",
     message: "",
-    targetType: "all", // all, class, student
+    targetType: "all",
     classId: "",
     studentId: ""
   });
 
-  const students = demoUsers.filter(u => u.role === "student");
-
-  const submit = (e) => {
-    e.preventDefault();
-    const newNotice = {
-      _id: `n${Date.now()}`,
-      title: form.title,
-      message: form.message,
-      createdAt: new Date().toISOString().split("T")[0],
-      targetType: form.targetType,
-      classId: form.classId,
-      studentId: form.studentId
-    };
-
-    setNotices([newNotice, ...notices]);
-    setForm({ title: "", message: "", targetType: "all", classId: "", studentId: "" });
-    setShowForm(false);
-    alert("Notice posted successfully!");
+  const fetchData = async () => {
+    try {
+      if (user.role === "student" || user.role === "parent") {
+        const noticesRes = await api.get("/notifications");
+        setNotices(noticesRes.data);
+      } else {
+        const [noticesRes, classesRes, usersRes] = await Promise.all([
+          api.get("/notifications"),
+          api.get("/classes"),
+          api.get("/users")
+        ]);
+        setNotices(noticesRes.data);
+        setClasses(classesRes.data);
+        setStudents(usersRes.data.filter(u => u.role === "student"));
+      }
+    } catch (err) {
+      console.error("Failed to fetch data", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = (id) => {
+  React.useEffect(() => {
+    fetchData();
+  }, [user.role]);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    const payload = {
+      title: form.title,
+      message: form.message,
+      audienceRole: form.targetType === "all" ? "all" : (form.targetType === "class" ? "student" : "student"),
+      targetType: form.targetType,
+      classId: form.targetType === "class" ? form.classId : null,
+      studentId: form.targetType === "student" ? form.studentId : null
+    };
+
+    try {
+      await api.post("/notifications", payload);
+      setForm({ title: "", message: "", targetType: "all", classId: "", studentId: "" });
+      setShowForm(false);
+      fetchData();
+      alert("Notice posted successfully!");
+    } catch (err) {
+      console.error("Failed to post notice", err);
+      alert("Failed to post notice.");
+    }
+  };
+
+  const handleDelete = async (id) => {
     if (window.confirm("Delete this notice?")) {
-      setNotices(notices.filter(n => n._id !== id));
+      try {
+        await api.delete(`/notifications/${id}`);
+        fetchData();
+      } catch (err) {
+        console.error("Failed to delete notice", err);
+      }
     }
   };
 
@@ -115,7 +152,7 @@ export default function NoticesPage() {
                       required
                     >
                       <option value="">Select Class</option>
-                      {demoClasses.map(c => (
+                      {classes.map(c => (
                         <option key={c._id} value={c._id}>{c.batchName}</option>
                       ))}
                     </select>
@@ -176,11 +213,11 @@ export default function NoticesPage() {
 
             <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
               <span className="text-[11px] font-medium text-slate-400">
-                📅 {notice.createdAt}
+                📅 {new Date(notice.createdAt).toLocaleDateString()}
               </span>
               {user.role === "admin" || user.role === "teacher" ? (
                 <span className="text-[11px] font-bold text-slate-900">
-                  By {user.name}
+                  By {notice.createdBy?.name || "Admin"}
                 </span>
               ) : null}
             </div>

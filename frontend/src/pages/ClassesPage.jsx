@@ -2,13 +2,31 @@ import React, { useState } from "react";
 import SectionHeader from "../components/SectionHeader";
 import Table from "../components/Table";
 import { useAuth } from "../context/AuthContext";
-import { demoClasses } from "../data/demo-data";
+import api from "../api/axios";
 
 export default function ClassesPage() {
   const { user } = useAuth();
 
-  const [rows, setRows] = useState(demoClasses);
+  const [rows, setRows] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchClasses = async () => {
+    try {
+      const { data } = await api.get("/classes");
+      setRows(data);
+    } catch (err) {
+      console.error("Failed to fetch classes", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    if (user.role === "admin" || user.role === "teacher") {
+      fetchClasses();
+    }
+  }, [user.role]);
 
   const [form, setForm] = useState({
     standardName: "",
@@ -27,7 +45,7 @@ export default function ClassesPage() {
     setEditingId(null);
   };
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
 
     const payload = {
@@ -36,23 +54,18 @@ export default function ClassesPage() {
       batchName: `${form.standardName} - ${form.batch}`
     };
 
-    if (editingId) {
-      setRows((prev) =>
-        prev.map((item) =>
-          item._id === editingId ? { ...item, ...payload } : item
-        )
-      );
+    try {
+      if (editingId) {
+        await api.put(`/classes/${editingId}`, payload);
+      } else {
+        await api.post("/classes", payload);
+      }
+      fetchClasses();
       resetForm();
-      return;
+    } catch (err) {
+      console.error("Failed to save class", err);
+      alert(err.response?.data?.message || "Failed to save class");
     }
-
-    const newClass = {
-      _id: Date.now().toString(),
-      ...payload
-    };
-
-    setRows((prev) => [...prev, newClass]);
-    resetForm();
   };
 
   const handleEdit = (row) => {
@@ -63,14 +76,17 @@ export default function ClassesPage() {
     });
   };
 
-  const handleDelete = (rowId) => {
+  const handleDelete = async (rowId) => {
     const confirmDelete = window.confirm("Are you sure you want to delete this standard?");
     if (!confirmDelete) return;
 
-    setRows((prev) => prev.filter((item) => item._id !== rowId));
-
-    if (editingId === rowId) {
-      resetForm();
+    try {
+      await api.delete(`/classes/${rowId}`);
+      fetchClasses();
+      if (editingId === rowId) resetForm();
+    } catch (err) {
+      console.error("Failed to delete class", err);
+      alert(err.response?.data?.message || "Failed to delete class");
     }
   };
 
