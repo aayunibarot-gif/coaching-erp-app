@@ -10,7 +10,7 @@ import { validateObjectId } from "../utils/validation.js";
 
 export const getUsers = async (req, res) => {
   const users = await User.find()
-    .populate("classId", "standardName timingStart timingEnd")
+    .populate("classId", "standardName batch batchName timingStart timingEnd")
     .sort({ createdAt: -1 });
 
   res.json(users);
@@ -41,7 +41,7 @@ export const createUser = async (req, res) => {
 
   const populated = await User.findById(user._id).populate(
     "classId",
-    "standardName timingStart timingEnd"
+    "standardName batch batchName timingStart timingEnd"
   );
 
   res.status(201).json(populated);
@@ -73,7 +73,7 @@ export const updateUser = async (req, res) => {
 
   const populated = await User.findById(user._id).populate(
     "classId",
-    "standardName timingStart timingEnd"
+    "standardName batch batchName timingStart timingEnd"
   );
 
   res.json(populated);
@@ -97,7 +97,7 @@ export const deleteUser = async (req, res) => {
 export const getStudentDetails = async (req, res) => {
   const student = await User.findById(req.params.id).populate(
     "classId",
-    "standardName timingStart timingEnd"
+    "standardName batch batchName timingStart timingEnd"
   );
 
   if (!student || student.role !== "student") {
@@ -154,7 +154,7 @@ export const getStudentDetails = async (req, res) => {
 
 export const getPendingUsers = async (req, res) => {
   const users = await User.find({ isApproved: false })
-    .populate("classId", "standardName timingStart timingEnd")
+    .populate("classId", "standardName batch batchName timingStart timingEnd")
     .sort({ createdAt: -1 });
 
   res.json(users);

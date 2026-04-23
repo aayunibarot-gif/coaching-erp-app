@@ -40,7 +40,7 @@ export default function DashboardPage() {
     dob: "",
     gender: "",
     standard: user?.classId?.standardName || "",
-    batch: user?.classId?.batch || "",
+    batch: user?.classId?.batchName || user?.classId?.batch || "",
     parentName: user?.parentName || "",
     parentPhone: user?.parentPhone || "",
   });
@@ -59,7 +59,7 @@ export default function DashboardPage() {
           dob: "",
           gender: "",
           standard: user.classId?.standardName || "",
-          batch: user.classId?.batch || "",
+          batch: user.classId?.batchName || user.classId?.batch || "",
           parentName: user.parentName || "",
           parentPhone: user.parentPhone || "",
         };
@@ -354,7 +354,10 @@ export default function DashboardPage() {
                   className="input"
                   type="tel"
                   value={profile.mobile}
-                  onChange={(e) => setProfile({ ...profile, mobile: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "");
+                    setProfile({ ...profile, mobile: val });
+                  }}
                   placeholder="Enter 10-digit mobile number"
                   pattern="[0-9]{10}"
                   maxLength="10"
@@ -414,7 +417,10 @@ export default function DashboardPage() {
                   className="input"
                   type="tel"
                   value={profile.parentPhone}
-                  onChange={(e) => setProfile({ ...profile, parentPhone: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "");
+                    setProfile({ ...profile, parentPhone: val });
+                  }}
                   placeholder="Enter 10-digit parent mobile"
                   pattern="[0-9]{10}"
                   maxLength="10"

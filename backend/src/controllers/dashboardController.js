@@ -22,7 +22,7 @@ export async function getAdminDashboard(req, res) {
   const classWiseDistribution = await Promise.all(
     classes.map(async (cls) => ({
       classId: cls._id,
-      className: `${cls.standardName} ${cls.section}`,
+      className: `${cls.standardName} ${cls.batchName || cls.batch}`,
       students: await User.countDocuments({ role: "student", classId: cls._id })
     }))
   );

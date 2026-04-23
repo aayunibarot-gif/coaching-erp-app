@@ -8,7 +8,7 @@ export async function listFees(req, res) {
 
   const fees = await Fee.find(filter)
     .populate("studentId", "name email")
-    .populate("classId", "standardName section");
+    .populate("classId", "standardName batchName");
   res.json(fees);
 }
 

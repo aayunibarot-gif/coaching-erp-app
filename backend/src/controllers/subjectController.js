@@ -3,7 +3,7 @@ import Subject from "../models/Subject.js";
 export async function listSubjects(req, res) {
   const filter = req.query.classId ? { classId: req.query.classId } : {};
   const subjects = await Subject.find(filter)
-    .populate("classId", "standardName section")
+    .populate("classId", "standardName batchName")
     .populate("teacherId", "name");
   res.json(subjects);
 }

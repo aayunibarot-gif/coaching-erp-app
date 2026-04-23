@@ -15,7 +15,7 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email }).populate("classId", "standardName");
+    const user = await User.findOne({ email }).populate("classId", "standardName batch batchName");
     
     console.log("Login Attempt for:", email);
     if (!user) {
@@ -75,7 +75,7 @@ export const registerByAdmin = async (req, res) => {
       classId: role === "student" ? validateObjectId(classId) : null,
     });
 
-    const populated = await User.findById(user._id).populate("classId", "standardName");
+    const populated = await User.findById(user._id).populate("classId", "standardName batch batchName");
 
     res.status(201).json({
       message: "User created successfully",

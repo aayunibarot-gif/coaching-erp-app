@@ -374,7 +374,10 @@ export default function AdminUsersPage() {
               type="tel"
               placeholder="Enter 10-digit mobile number"
               value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              onChange={(e) => {
+                const val = e.target.value.replace(/\D/g, "");
+                setForm({ ...form, phone: val });
+              }}
               pattern="[0-9]{10}"
               maxLength="10"
               minLength="10"
@@ -400,7 +403,10 @@ export default function AdminUsersPage() {
                   type="tel"
                   placeholder="Enter 10-digit parent mobile"
                   value={form.parentPhone}
-                  onChange={(e) => setForm({ ...form, parentPhone: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "");
+                    setForm({ ...form, parentPhone: val });
+                  }}
                   pattern="[0-9]{10}"
                   maxLength="10"
                   minLength="10"
@@ -513,10 +519,14 @@ export default function AdminUsersPage() {
                   label: "Parent Mobile",
                   render: (row) => row.parentPhone || "-"
                 },
-                {
                   key: "standard",
                   label: "Standard / Batch",
-                  render: (row) => row.classId?.batchName || "-"
+                  render: (row) => {
+                    if (!row.classId) return "-";
+                    const std = row.classId.standardName || "";
+                    const batch = row.classId.batchName || row.classId.batch || "";
+                    return batch ? `${std} (${batch})` : std;
+                  }
                 },
                 {
                   key: "actions",
