@@ -1,8 +1,12 @@
 import ClassModel from "../models/Class.js";
 
 export async function listClasses(req, res) {
-  const classes = await ClassModel.find().populate("classTeacherId", "name email");
-  res.json(classes);
+  try {
+    const classes = await ClassModel.find().lean();
+    res.json(classes);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch classes" });
+  }
 }
 
 export async function createClass(req, res) {

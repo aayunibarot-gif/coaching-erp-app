@@ -227,10 +227,26 @@ export default function DashboardPage() {
             <h2 className="mb-4 text-xl font-bold text-slate-900">Standards & Timings</h2>
             <Table
               columns={[
-                { key: "standardName", label: "Standard" },
-                { key: "batch", label: "Batch" },
-                { key: "timingStart", label: "Start" },
-                { key: "timingEnd", label: "End" },
+                { 
+                  key: "standardName", 
+                  label: "Standard",
+                  render: (row) => row.standardName || "Unnamed"
+                },
+                { 
+                  key: "batch", 
+                  label: "Batch",
+                  render: (row) => row.batch || "Morning"
+                },
+                { 
+                  key: "timingStart", 
+                  label: "Start",
+                  render: (row) => row.timingStart || "—"
+                },
+                { 
+                  key: "timingEnd", 
+                  label: "End",
+                  render: (row) => row.timingEnd || "—"
+                },
               ]}
               rows={Array.isArray(dashboardData.classesList) ? dashboardData.classesList : []}
             />
