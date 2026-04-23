@@ -7,6 +7,14 @@ const classSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    batch: {
+      type: String,
+      default: "Morning",
+    },
+    batchName: {
+      type: String,
+      default: "",
+    },
     timingStart: {
       type: String,
       default: "",
