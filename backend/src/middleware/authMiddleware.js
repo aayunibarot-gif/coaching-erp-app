@@ -42,3 +42,5 @@ export const authorize = (...roles) => {
 };
 
 export const adminOnly = authorize("admin");
+export const teacherOnly = authorize("teacher", "admin");
+export const teacherOrAdmin = authorize("teacher", "admin");
