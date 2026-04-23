@@ -4,6 +4,7 @@ import Attendance from "../models/Attendance.js";
 import Mark from "../models/Mark.js";
 import Fee from "../models/Fee.js";
 import Remark from "../models/Remark.js";
+import bcrypt from "bcryptjs";
 import { sendApprovalSuccessEmailToStudent } from "../utils/email.js";
 import { validateObjectId } from "../utils/validation.js";
 
@@ -62,7 +63,7 @@ export const updateUser = async (req, res) => {
   user.studentId = studentId ?? user.studentId;
   user.parentName = parentName ?? user.parentName;
   user.parentPhone = parentPhone ?? user.parentPhone;
-  user.classId = role === "student" ? validateClassId(classId) : null;
+  user.classId = role === "student" ? validateObjectId(classId) : null;
 
   if (password && password.trim()) {
     user.password = await bcrypt.hash(password, 10);
