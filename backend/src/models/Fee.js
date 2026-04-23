@@ -1,23 +1,40 @@
 import mongoose from "mongoose";
 
-const feesSchema = new mongoose.Schema({
-  student: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true
+const feesSchema = new mongoose.Schema(
+  {
+    studentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true
+    },
+    classId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Class",
+      required: true
+    },
+    totalAmount: {
+      type: Number,
+      required: true
+    },
+    paidAmount: {
+      type: Number,
+      required: true
+    },
+    pendingAmount: {
+      type: Number,
+      required: true
+    },
+    dueDate: {
+      type: String,
+      required: true
+    },
+    status: {
+      type: String,
+      enum: ["paid", "partial", "unpaid"],
+      default: "unpaid"
+    }
   },
-  totalFees: {
-    type: Number,
-    required: true
-  },
-  paid: {
-    type: Number,
-    required: true
-  },
-  remaining: {
-    type: Number,
-    required: true
-  }
-});
+  { timestamps: true }
+);
 
-export default mongoose.model("Fees", feesSchema);
+export default mongoose.model("Fee", feesSchema);
