@@ -6,8 +6,15 @@ export async function listClasses(req, res) {
 }
 
 export async function createClass(req, res) {
-  const created = await ClassModel.create(req.body);
-  res.status(201).json(created);
+  try {
+    const created = await ClassModel.create(req.body);
+    res.status(201).json(created);
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({ message: `Standard "${req.body.standardName}" already exists.` });
+    }
+    throw error;
+  }
 }
 
 export async function updateClass(req, res) {

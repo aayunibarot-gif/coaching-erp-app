@@ -67,32 +67,37 @@ export default function DashboardPage() {
     const fetchDashboard = async () => {
       try {
         if (user.role === "admin") {
-          const [dashRes, noticesRes, pendingRes, classesRes, usersRes] = await Promise.all([
+          const results = await Promise.allSettled([
             api.get("/dashboard/admin"),
             api.get("/notifications"),
             api.get("/users/pending"),
             api.get("/classes"),
             api.get("/users")
           ]);
+          
+          const [dashRes, noticesRes, pendingRes, classesRes, usersRes] = results.map(r => r.status === "fulfilled" ? r.value : { data: null });
+          
           setDashboardData({
-            ...dashRes.data,
-            recentNotices: Array.isArray(noticesRes.data) ? noticesRes.data.slice(0, 5) : [],
-            classesList: Array.isArray(classesRes.data) ? classesRes.data : [],
-            lowAttendanceStudents: Array.isArray(usersRes.data) 
+            ...(dashRes?.data || {}),
+            recentNotices: Array.isArray(noticesRes?.data) ? noticesRes.data.slice(0, 5) : [],
+            classesList: Array.isArray(classesRes?.data) ? classesRes.data : [],
+            lowAttendanceStudents: Array.isArray(usersRes?.data) 
               ? usersRes.data.filter(u => u.role === "student" && Math.random() < 0.1)
               : []
           });
-          setPendingUsers(Array.isArray(pendingRes.data) ? pendingRes.data : []);
+          setPendingUsers(Array.isArray(pendingRes?.data) ? pendingRes.data : []);
         } else if (user.role === "teacher") {
-          const [dashRes, usersRes, marksRes] = await Promise.all([
+          const results = await Promise.allSettled([
             api.get("/dashboard/teacher"),
             api.get("/users"),
             api.get("/marks")
           ]);
+          const [dashRes, usersRes, marksRes] = results.map(r => r.status === "fulfilled" ? r.value : { data: null });
+
           setDashboardData({
-            ...dashRes.data,
-            studentsList: Array.isArray(usersRes.data) ? usersRes.data.filter(u => u.role === "student") : [],
-            totalMarks: Array.isArray(marksRes.data) ? marksRes.data.length : 0
+            ...(dashRes?.data || {}),
+            studentsList: Array.isArray(usersRes?.data) ? usersRes.data.filter(u => u.role === "student") : [],
+            totalMarks: Array.isArray(marksRes?.data) ? marksRes.data.length : 0
           });
         } else if (user.role === "student") {
           const dashRes = await api.get("/dashboard/student");

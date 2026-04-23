@@ -55,8 +55,12 @@ export async function getTeacherDashboard(req, res) {
 
   const weakStudentsMap = new Map();
   for (const item of marks) {
-    if (item.obtainedMarks < 40) {
-      weakStudentsMap.set(String(item.studentId._id), { studentId: item.studentId._id, name: item.studentId.name, latestMark: item.obtainedMarks });
+    if (item.obtainedMarks < 40 && item.studentId) {
+      weakStudentsMap.set(String(item.studentId._id), { 
+        studentId: item.studentId._id, 
+        name: item.studentId.name, 
+        latestMark: item.obtainedMarks 
+      });
     }
   }
 
