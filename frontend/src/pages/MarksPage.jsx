@@ -193,6 +193,9 @@ export default function MarksPage() {
               required
             >
               <option value="">Select standard / batch</option>
+              {classes.length === 0 && (
+                <option disabled>No standards found. Please add them first.</option>
+              )}
               {classes.map((cls) => (
                 <option key={cls._id} value={cls._id}>
                   {cls.batchName || cls.standardName}
