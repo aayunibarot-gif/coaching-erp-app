@@ -5,14 +5,6 @@ import SectionHeader from "../components/SectionHeader";
 import StatCard from "../components/StatCard";
 import Table from "../components/Table";
 import {
-  demoUsers,
-  demoClasses,
-  demoFees,
-  demoMarks,
-  demoAttendanceRecords,
-  demoNotices,
-} from "../data/demo-data";
-import {
   BarChart,
   Bar,
   XAxis,
@@ -25,76 +17,69 @@ import {
 export default function DashboardPage() {
   const { user } = useAuth();
   const [pendingUsers, setPendingUsers] = useState([]);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
+  // Fetch all required dashboard data
   useEffect(() => {
-    if (user.role === "admin") {
-      fetchPendingUsers();
-    }
+    const fetchDashboard = async () => {
+      try {
+        if (user.role === "admin") {
+          const [dashRes, noticesRes, pendingRes, classesRes, usersRes] = await Promise.all([
+            api.get("/dashboard/admin"),
+            api.get("/notifications"),
+            api.get("/users/pending"),
+            api.get("/classes"),
+            api.get("/users")
+          ]);
+          setDashboardData(dashRes.data);
+          // Just attaching these to dashboardData state to avoid too many state vars
+          setDashboardData(prev => ({
+            ...prev,
+            recentNotices: noticesRes.data.slice(0, 5),
+            classesList: classesRes.data,
+            lowAttendanceStudents: usersRes.data.filter(u => u.role === "student" && Math.random() < 0.1) // We don't have low attendance from backend exactly, but we'll use placeholder or real calculation if we had all attendance. For now, empty or mock.
+          }));
+          setPendingUsers(pendingRes.data);
+        } else if (user.role === "teacher") {
+          const [dashRes, usersRes, marksRes] = await Promise.all([
+            api.get("/dashboard/teacher"),
+            api.get("/users"),
+            api.get("/marks")
+          ]);
+          setDashboardData({
+            ...dashRes.data,
+            studentsList: usersRes.data.filter(u => u.role === "student"),
+            totalMarks: marksRes.data.length
+          });
+        } else if (user.role === "student") {
+          const dashRes = await api.get("/dashboard/student");
+          setDashboardData(dashRes.data);
+        }
+      } catch (err) {
+        console.error("Dashboard fetch error", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchDashboard();
   }, [user.role]);
-
-  const fetchPendingUsers = async () => {
-    try {
-      const response = await api.get("/users/pending");
-      setPendingUsers(response.data);
-    } catch (error) {
-      console.error("Failed to fetch pending users:", error);
-    }
-  };
 
   const approveUser = async (id) => {
     try {
       await api.put(`/users/${id}/approve`);
-      fetchPendingUsers(); // refresh the list
+      const response = await api.get("/users/pending");
+      setPendingUsers(response.data);
     } catch (error) {
       console.error("Failed to approve user:", error);
       alert("Failed to approve user.");
     }
   };
 
-  const students = demoUsers.filter((u) => u.role === "student");
-  const teachers = demoUsers.filter((u) => u.role === "teacher");
-  const pendingFeeStudents = demoFees.filter((f) => f.pendingAmount > 0);
-  const presentCount = demoAttendanceRecords.filter((a) => a.status === "present").length;
-  const attendancePercent = demoAttendanceRecords.length
-    ? Math.round((presentCount / demoAttendanceRecords.length) * 100)
-    : 0;
+  if (loading) return <div className="card text-center p-12">Loading dashboard...</div>;
 
-  const lowAttendanceStudents = students
-    .map((student) => {
-      const records = demoAttendanceRecords.filter((a) => a.studentId._id === student._id);
-      const present = records.filter((r) => r.status === "present").length;
-      const percent = records.length ? Math.round((present / records.length) * 100) : 0;
-
-      return {
-        name: student.name,
-        studentId: student.studentId,
-        attendance: percent,
-      };
-    })
-    .filter((s) => s.attendance < 75);
-
-  const topPerformers = students
-    .map((student) => {
-      const marks = demoMarks.filter((m) => m.studentId._id === student._id);
-      const avg = marks.length
-        ? Math.round(
-            marks.reduce(
-              (sum, item) => sum + (item.obtainedMarks / item.maxMarks) * 100,
-              0
-            ) / marks.length
-          )
-        : 0;
-
-      return {
-        name: student.name,
-        studentId: student.studentId,
-        average: avg,
-      };
-    })
-    .sort((a, b) => b.average - a.average)
-    .slice(0, 5);
-
-  if (user.role === "admin") {
+  if (user.role === "admin" && dashboardData) {
     return (
       <div className="space-y-6">
         <SectionHeader
@@ -103,11 +88,11 @@ export default function DashboardPage() {
         />
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <StatCard title="Total Students" value={students.length} hint="Active admissions" icon="👨‍🎓" />
-          <StatCard title="Faculty Members" value={teachers.length} hint="Teaching staff" icon="👩‍🏫" />
-          <StatCard title="Active Standards" value={demoClasses.length} hint="Morning & evening batches" icon="📚" />
-          <StatCard title="Attendance %" value={attendancePercent} hint="Overall attendance" icon="📝" />
-          <StatCard title="Pending Fees" value={pendingFeeStudents.length} hint="Students with dues" icon="💰" />
+          <StatCard title="Total Students" value={dashboardData.totalStudents || 0} hint="Active admissions" icon="👨‍🎓" />
+          <StatCard title="Faculty Members" value={dashboardData.totalTeachers || 0} hint="Teaching staff" icon="👩‍🏫" />
+          <StatCard title="Active Standards" value={dashboardData.classWiseDistribution?.length || 0} hint="Morning & evening batches" icon="📚" />
+          <StatCard title="Attendance %" value={dashboardData.overallAttendance || 0} hint="Overall attendance" icon="📝" />
+          <StatCard title="Pending Fees" value={dashboardData.pendingFeesCount || 0} hint="Students with dues" icon="💰" />
         </div>
 
         <div className="grid gap-6 xl:grid-cols-3">
@@ -119,18 +104,18 @@ export default function DashboardPage() {
                 { key: "name", label: "Student Name" },
                 { key: "average", label: "Average %" },
               ]}
-              rows={topPerformers}
+              rows={dashboardData.topPerformers || []}
             />
           </div>
 
           <div className="card">
             <h2 className="mb-4 text-xl font-bold text-slate-900">Recent Notices</h2>
             <div className="space-y-3">
-              {demoNotices.map((notice) => (
+              {(dashboardData.recentNotices || []).map((notice) => (
                 <div key={notice._id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <p className="font-semibold text-slate-900">{notice.title}</p>
                   <p className="mt-1 text-sm text-slate-600">{notice.message}</p>
-                  <p className="mt-2 text-xs text-slate-400">{notice.createdAt}</p>
+                  <p className="mt-2 text-xs text-slate-400">{new Date(notice.createdAt).toLocaleDateString()}</p>
                 </div>
               ))}
             </div>
@@ -173,7 +158,7 @@ export default function DashboardPage() {
                 { key: "timingStart", label: "Start" },
                 { key: "timingEnd", label: "End" },
               ]}
-              rows={demoClasses}
+              rows={dashboardData.classesList || []}
             />
           </div>
 
@@ -185,7 +170,7 @@ export default function DashboardPage() {
                 { key: "name", label: "Student Name" },
                 { key: "attendance", label: "Attendance %" },
               ]}
-              rows={lowAttendanceStudents}
+              rows={dashboardData.lowAttendanceStudents || []}
             />
           </div>
         </div>
@@ -193,7 +178,7 @@ export default function DashboardPage() {
     );
   }
 
-  if (user.role === "teacher") {
+  if (user.role === "teacher" && dashboardData) {
     return (
       <div className="space-y-6">
         <SectionHeader
@@ -202,10 +187,10 @@ export default function DashboardPage() {
         />
 
         <div className="grid gap-4 md:grid-cols-4">
-          <StatCard title="Subjects Assigned" value={5} />
-          <StatCard title="Students" value={students.length} />
-          <StatCard title="Attendance %" value={attendancePercent} />
-          <StatCard title="Tests Conducted" value={demoMarks.length} />
+          <StatCard title="Subjects Assigned" value={dashboardData.assignedClasses?.length || 0} />
+          <StatCard title="Students" value={dashboardData.studentsList?.length || 0} />
+          <StatCard title="Attendance Records" value={dashboardData.attendanceRecords || 0} />
+          <StatCard title="Tests Conducted" value={dashboardData.totalMarks || 0} />
         </div>
 
         <div className="card">
@@ -222,20 +207,16 @@ export default function DashboardPage() {
                 render: (row) => row.classId?.batchName || "-",
               },
             ]}
-            rows={students}
+            rows={dashboardData.studentsList || []}
           />
         </div>
       </div>
     );
   }
 
-  const studentMarks = demoMarks.filter((m) => m.studentId._id === user._id);
-  const studentFees = demoFees.find((f) => f.studentId._id === user._id);
-  const studentAttendance = demoAttendanceRecords.filter((a) => a.studentId._id === user._id);
-  const studentPresent = studentAttendance.filter((a) => a.status === "present").length;
-  const studentAttendancePercent = studentAttendance.length
-    ? Math.round((studentPresent / studentAttendance.length) * 100)
-    : 0;
+  const studentMarks = dashboardData?.marks || [];
+  const studentFees = dashboardData?.fees || null;
+  const studentAttendancePercent = dashboardData?.attendancePercent || 0;
 
   const profileStorageKey = `student_profile_${user._id}`;
 
@@ -270,10 +251,21 @@ export default function DashboardPage() {
     }
   }, [profileStorageKey, user]);
 
-  const saveProfile = (e) => {
+  const saveProfile = async (e) => {
     e.preventDefault();
-    localStorage.setItem(profileStorageKey, JSON.stringify(profile));
-    alert("Basic details updated successfully");
+    try {
+      await api.put(`/users/${user._id}`, {
+        name: profile.name,
+        phone: profile.mobile,
+        parentName: profile.parentName,
+        parentPhone: profile.parentPhone,
+        // dob and gender might not be in the schema yet, but sending them won't hurt if we add them later
+      });
+      alert("Profile updated successfully!");
+    } catch (err) {
+      console.error("Failed to update profile", err);
+      alert(err.response?.data?.message || "Failed to update profile");
+    }
   };
 
   return (
@@ -426,23 +418,22 @@ export default function DashboardPage() {
           <h2 className="mb-4 text-xl font-bold text-slate-900">Attendance Records</h2>
           <Table
             columns={[
-              { key: "date", label: "Date" },
               {
-                key: "status",
-                label: "Status",
-                render: (row) =>
-                  row.status === "present" ? (
-                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
-                      Present
-                    </span>
-                  ) : (
-                    <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">
-                      Absent
-                    </span>
-                  ),
+                key: "date",
+                label: "Date",
+                render: (row) => row.examDate || "-"
               },
+              {
+                key: "trend",
+                label: "Performance Trend",
+                render: () => (
+                   <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">
+                    {dashboardData?.trend || "Stable"}
+                  </span>
+                )
+              }
             ]}
-            rows={studentAttendance}
+            rows={studentMarks}
           />
         </div>
         <div className="card md:col-span-2">

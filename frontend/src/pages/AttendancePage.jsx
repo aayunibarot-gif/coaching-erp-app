@@ -2,38 +2,79 @@ import React, { useMemo, useState } from "react";
 import SectionHeader from "../components/SectionHeader";
 import Table from "../components/Table";
 import StatCard from "../components/StatCard";
-import { demoAttendanceRecords, demoClasses, demoUsers } from "../data/demo-data";
 import { useAuth } from "../context/AuthContext";
+import api from "../api/axios";
 
 export default function AttendancePage() {
   const { user } = useAuth();
 
-  const [selectedStandard, setSelectedStandard] = useState("6th Standard");
-  const [selectedBatch, setSelectedBatch] = useState("Morning");
-  const [selectedDate, setSelectedDate] = useState("2026-04-18");
+  const [classes, setClasses] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [attendanceRecords, setAttendanceRecords] = useState([]);
+  const [selectedStandard, setSelectedStandard] = useState("");
+  const [selectedBatch, setSelectedBatch] = useState("");
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [attendanceMap, setAttendanceMap] = useState({});
+  const [loading, setLoading] = useState(true);
 
-  const students = demoUsers.filter((u) => u.role === "student");
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        if (user.role === "admin" || user.role === "teacher") {
+          const [clsRes, userRes] = await Promise.all([
+            api.get("/classes"),
+            api.get("/users")
+          ]);
+          setClasses(clsRes.data);
+          setUsers(userRes.data);
+          if (clsRes.data.length > 0) {
+            setSelectedStandard(clsRes.data[0].standardName);
+            setSelectedBatch(clsRes.data[0].batch || "");
+          }
+        } else {
+          const attRes = await api.get(`/attendance?studentId=${user._id}`);
+          setAttendanceRecords(attRes.data.records || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch initial data", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [user.role, user._id]);
 
-  const standardOptions = [...new Set(demoClasses.map((item) => item.standardName))];
-
-  const batchOptions = demoClasses
+  const students = users.filter((u) => u.role === "student");
+  const standardOptions = [...new Set(classes.map((item) => item.standardName))];
+  const batchOptions = classes
     .filter((item) => item.standardName === selectedStandard)
     .map((item) => item.batch);
 
-  const selectedClassData = demoClasses.find(
-    (item) => item.standardName === selectedStandard && item.batch === selectedBatch
+  const selectedClassData = classes.find(
+    (item) => item.standardName === selectedStandard && (item.batch || "") === selectedBatch
   );
+
+  React.useEffect(() => {
+    const fetchClassAttendance = async () => {
+      if (!selectedClassData?._id) return;
+      try {
+        const res = await api.get(`/attendance?classId=${selectedClassData._id}`);
+        setAttendanceRecords(res.data.records || []);
+      } catch (err) {
+        console.error("Failed to fetch class attendance", err);
+      }
+    };
+    if (user.role === "admin" || user.role === "teacher") {
+      fetchClassAttendance();
+    }
+  }, [selectedClassData?._id, user.role]);
 
   const classStudents = useMemo(() => {
     if (!selectedClassData) return [];
     return students.filter((student) => student.classId?._id === selectedClassData._id);
   }, [students, selectedClassData]);
 
-  const classAttendanceHistory = useMemo(() => {
-    if (!selectedClassData) return [];
-    return demoAttendanceRecords.filter((item) => item.classId === selectedClassData._id);
-  }, [selectedClassData]);
+  const classAttendanceHistory = attendanceRecords;
 
   const presentCount = classAttendanceHistory.filter((a) => a.status === "present").length;
   const absentCount = classAttendanceHistory.filter((a) => a.status === "absent").length;
@@ -56,6 +97,30 @@ export default function AttendancePage() {
       ...prev,
       [studentId]: status
     }));
+  };
+
+  const submitAttendance = async () => {
+    if (!selectedClassData?._id) return alert("Select a valid class first");
+    
+    // Find students marked as absent
+    const absentStudentIds = Object.entries(attendanceMap)
+      .filter(([id, status]) => status === "absent")
+      .map(([id]) => id);
+
+    try {
+      await api.post("/attendance", {
+        classId: selectedClassData._id,
+        date: selectedDate,
+        absentStudentIds
+      });
+      alert("Attendance marked successfully");
+      // Refresh history
+      const res = await api.get(`/attendance?classId=${selectedClassData._id}`);
+      setAttendanceRecords(res.data.records || []);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to mark attendance");
+    }
   };
 
   const teacherView = (
@@ -82,7 +147,7 @@ export default function AttendancePage() {
               const newStandard = e.target.value;
               setSelectedStandard(newStandard);
               const firstBatch =
-                demoClasses.find((item) => item.standardName === newStandard)?.batch || "";
+                classes.find((item) => item.standardName === newStandard)?.batch || "";
               setSelectedBatch(firstBatch);
               setAttendanceMap({});
             }}
@@ -124,7 +189,7 @@ export default function AttendancePage() {
         </div>
 
         <div className="flex items-end">
-          <button className="btn-primary w-full">
+          <button className="btn-primary w-full" onClick={submitAttendance}>
             Save Attendance
           </button>
         </div>
@@ -236,7 +301,7 @@ export default function AttendancePage() {
     </div>
   );
 
-  const studentRecords = demoAttendanceRecords.filter((item) => item.studentId._id === user?._id);
+  const studentRecords = attendanceRecords;
   const studentPresentCount = studentRecords.filter((a) => a.status === "present").length;
   const studentPercent = studentRecords.length
     ? Math.round((studentPresentCount / studentRecords.length) * 100)

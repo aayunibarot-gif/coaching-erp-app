@@ -34,6 +34,7 @@ export const createUser = async (req, res) => {
     parentName,
     parentPhone,
     classId: role === "student" ? classId || null : null,
+    isApproved: true,
   });
 
   const populated = await User.findById(user._id).populate(

@@ -4,7 +4,6 @@ import SectionHeader from "../components/SectionHeader";
 import Table from "../components/Table";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
-import { demoClasses, demoUsers } from "../data/demo-data";
 
 const initialForm = {
   name: "",
@@ -47,6 +46,7 @@ export default function AdminUsersPage() {
   const navigate = useNavigate();
 
   const [rows, setRows] = useState([]);
+  const [classes, setClasses] = useState([]);
   const [form, setForm] = useState(initialForm);
   const [editingId, setEditingId] = useState(null);
   const [selectedStandard, setSelectedStandard] = useState("all");
@@ -58,10 +58,14 @@ export default function AdminUsersPage() {
 
   const fetchUsers = async () => {
     try {
-      const response = await api.get("/users");
-      setRows(response.data);
+      const [usersRes, classesRes] = await Promise.all([
+        api.get("/users"),
+        api.get("/classes")
+      ]);
+      setRows(usersRes.data);
+      setClasses(classesRes.data);
     } catch (error) {
-      console.error("Failed to fetch users", error);
+      console.error("Failed to fetch data", error);
     } finally {
       setLoadingUsers(false);
     }
@@ -412,7 +416,7 @@ export default function AdminUsersPage() {
                   onChange={(e) => setForm({ ...form, classId: e.target.value })}
                 >
                   <option value="">Select Standard / Batch</option>
-                  {demoClasses.map((cls) => (
+                  {classes.map((cls) => (
                     <option key={cls._id} value={cls._id}>
                       {cls.batchName}
                     </option>
@@ -462,7 +466,7 @@ export default function AdminUsersPage() {
                 onChange={(e) => setSelectedStandard(e.target.value)}
               >
                 <option value="all">All Standards / Batches</option>
-                {demoClasses.map((cls) => (
+                {classes.map((cls) => (
                   <option key={cls._id} value={cls._id}>
                     {cls.batchName}
                   </option>

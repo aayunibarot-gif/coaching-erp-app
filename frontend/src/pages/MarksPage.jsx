@@ -2,8 +2,8 @@ import React, { useMemo, useState } from "react";
 import SectionHeader from "../components/SectionHeader";
 import Table from "../components/Table";
 import StatCard from "../components/StatCard";
-import { demoMarks, demoUsers, demoSubjects, demoClasses } from "../data/demo-data";
 import { useAuth } from "../context/AuthContext";
+import api from "../api/axios";
 import {
   LineChart,
   Line,
@@ -16,13 +16,38 @@ import {
 
 export default function MarksPage() {
   const { user } = useAuth();
-  const [marks, setMarks] = useState(demoMarks);
-  const students = demoUsers.filter((u) => u.role === "student");
+  const [marks, setMarks] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Students only see their own marks
-  const visibleMarks = user.role === "student"
-    ? marks.filter(m => (m.studentId._id || m.studentId) === user._id)
-    : marks;
+  const fetchData = async () => {
+    try {
+      if (user.role === "student") {
+        const marksRes = await api.get(`/marks?studentId=${user._id}`);
+        setMarks(marksRes.data);
+      } else {
+        const [marksRes, usersRes, subjectsRes] = await Promise.all([
+          api.get("/marks"),
+          api.get("/users"),
+          api.get("/subjects")
+        ]);
+        setMarks(marksRes.data);
+        setStudents(usersRes.data.filter((u) => u.role === "student"));
+        setSubjects(subjectsRes.data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch data", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchData();
+  }, [user._id, user.role]);
+
+  const visibleMarks = marks;
 
   const [form, setForm] = useState({
     studentId: "",
@@ -70,31 +95,42 @@ export default function MarksPage() {
       .slice(0, 5);
   }, [marks, students]);
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    const student = students.find(s => s._id === form.studentId);
-    const subject = demoSubjects.find(s => s._id === form.subjectId);
+    if (!form.studentId || !form.subjectId) return;
 
-    if (!student || !subject) return;
-
-    const newMark = {
-      _id: `m${Date.now()}`,
-      studentId: student,
-      subjectId: subject,
-      testType: form.testType,
-      obtainedMarks: Number(form.obtainedMarks),
-      maxMarks: Number(form.maxMarks),
-      examDate: form.examDate
+    const payload = {
+      entries: [
+        {
+          studentId: form.studentId,
+          subjectId: form.subjectId,
+          testType: form.testType,
+          obtainedMarks: Number(form.obtainedMarks),
+          maxMarks: Number(form.maxMarks),
+          examDate: form.examDate
+        }
+      ]
     };
 
-    setMarks([newMark, ...marks]);
-    setForm({ ...form, studentId: "", obtainedMarks: "" });
-    alert("Marks added successfully!");
+    try {
+      await api.post("/marks", payload);
+      setForm({ ...form, studentId: "", obtainedMarks: "" });
+      fetchData();
+      alert("Marks added successfully!");
+    } catch (err) {
+      console.error("Failed to add marks", err);
+      alert("Failed to add marks");
+    }
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm("Delete this record?")) {
-      setMarks(marks.filter(m => m._id !== id));
+      try {
+        await api.delete(`/marks/${id}`);
+        fetchData();
+      } catch (err) {
+        console.error("Failed to delete marks", err);
+      }
     }
   };
 
@@ -147,7 +183,7 @@ export default function MarksPage() {
               required
             >
               <option value="">Select subject</option>
-              {demoSubjects.map((s) => (
+              {subjects.map((s) => (
                 <option key={s._id} value={s._id}>
                   {s.subjectName}
                 </option>
@@ -250,7 +286,7 @@ export default function MarksPage() {
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={visibleMarks.map(m => ({
-                subject: m.subjectId.subjectName,
+                subject: m.subjectId?.subjectName || "Unknown",
                 score: Math.round((m.obtainedMarks / m.maxMarks) * 100)
               }))}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />

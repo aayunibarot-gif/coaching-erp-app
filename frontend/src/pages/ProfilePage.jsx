@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import SectionHeader from "../components/SectionHeader";
 import { useAuth } from "../context/AuthContext";
-import { demoClasses } from "../data/demo-data";
+import api from "../api/axios";
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -11,13 +11,22 @@ export default function ProfilePage() {
     parentName: user?.parentName || "",
     parentPhone: user?.parentPhone || "",
   });
+  const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    // In a real app this would call an API to update the user
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setLoading(true);
+    try {
+      await api.put(`/users/${user._id}`, form);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.error("Failed to update profile", err);
+      alert(err.response?.data?.message || "Failed to update profile");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

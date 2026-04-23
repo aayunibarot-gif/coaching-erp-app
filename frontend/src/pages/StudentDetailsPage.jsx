@@ -4,48 +4,49 @@ import SectionHeader from "../components/SectionHeader";
 import Table from "../components/Table";
 import StatCard from "../components/StatCard";
 import { useAuth } from "../context/AuthContext";
-import {
-  demoAttendanceRecords,
-  demoFees,
-  demoMarks,
-  demoUsers
-} from "../data/demo-data";
+import api from "../api/axios";
 
 export default function StudentDetailsPage() {
   const { user } = useAuth();
   const { id } = useParams();
+  const [data, setData] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await api.get(`/users/student/${id}/details`);
+        setData(response.data);
+      } catch (err) {
+        console.error("Failed to fetch student details", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id]);
 
   if (user?.role !== "admin") {
     return <Navigate to="/users" replace />;
   }
 
-  const student =
-    demoUsers.find((u) => u._id === id) ||
-    demoUsers.find((u) => u.role === "student");
+  if (loading) return <div className="card text-center p-12 text-slate-500 font-semibold">Loading student details...</div>;
+  if (!data) return <div className="card text-center p-12 text-red-500 font-semibold">Student details not found.</div>;
 
-  const marks = demoMarks.filter((m) => m.studentId._id === student._id);
-  const attendance = demoAttendanceRecords.filter(
-    (a) => a.studentId._id === student._id
-  );
-  const fees = demoFees.find((f) => f.studentId._id === student._id);
+  const { student, attendance, marks, fees, summary } = data;
 
-  const present = attendance.filter((a) => a.status === "present").length;
-  const attendancePercent = attendance.length
-    ? Math.round((present / attendance.length) * 100)
-    : 0;
-
-  const avgMarks = marks.length
-    ? Math.round(
-        marks.reduce(
-          (sum, item) => sum + (item.obtainedMarks / item.maxMarks) * 100,
-          0
-        ) / marks.length
-      )
-    : 0;
-
-  const handleResetPassword = () => {
-    const newPassword = `${student.studentId}@123`;
-    alert(`Password reset successfully for ${student.name}\n\nNew Password: ${newPassword}`);
+  const handleResetPassword = async () => {
+    const confirm = window.confirm(`Are you sure you want to reset password for ${student.name}?`);
+    if (!confirm) return;
+    
+    try {
+      const newPassword = `${student.studentId || "Student"}@123`;
+      await api.put(`/users/${student._id}`, { password: newPassword });
+      alert(`Password reset successfully for ${student.name}\n\nNew Password: ${newPassword}`);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to reset password.");
+    }
   };
 
   return (
@@ -56,10 +57,10 @@ export default function StudentDetailsPage() {
       />
 
       <div className="grid gap-4 md:grid-cols-4">
-        <StatCard title="Attendance %" value={attendancePercent} />
-        <StatCard title="Average Marks" value={avgMarks} />
-        <StatCard title="Pending Fees" value={fees?.pendingAmount || 0} />
-        <StatCard title="Admission Date" value={student.admissionDate || "-"} />
+        <StatCard title="Attendance %" value={summary.attendancePercent} />
+        <StatCard title="Average Marks" value={summary.avgMarks} />
+        <StatCard title="Pending Fees" value={summary.pendingFees} />
+        <StatCard title="Admission Date" value={new Date(student.createdAt).toLocaleDateString() || "-"} />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
@@ -80,20 +81,21 @@ export default function StudentDetailsPage() {
             <button className="btn-primary" onClick={handleResetPassword}>
               Reset Password
             </button>
-            <button className="btn-secondary">Print Credentials</button>
+            <button className="btn-secondary" onClick={() => window.print()}>Print Credentials</button>
             <button className="btn-secondary">Send Notice</button>
           </div>
         </div>
 
         <div className="card">
           <h2 className="mb-4 text-xl font-bold text-slate-900">Fee Summary</h2>
-          {fees ? (
+          {fees && fees.length > 0 ? (
             <div className="space-y-3 text-sm text-slate-700">
-              <p><strong>Total Fee:</strong> ₹{fees.totalAmount}</p>
-              <p><strong>Paid Fee:</strong> ₹{fees.paidAmount}</p>
-              <p><strong>Pending Fee:</strong> ₹{fees.pendingAmount}</p>
-              <p><strong>Status:</strong> {fees.status}</p>
-              <p><strong>Due Date:</strong> {fees.dueDate}</p>
+              <p><strong>Latest Total Fee:</strong> ₹{fees[0].totalAmount}</p>
+              <p><strong>Latest Paid Fee:</strong> ₹{fees[0].paidAmount}</p>
+              <p><strong>Latest Pending Fee:</strong> ₹{fees[0].pendingAmount}</p>
+              <p><strong>Status:</strong> {fees[0].status}</p>
+              <p><strong>Due Date:</strong> {fees[0].dueDate}</p>
+              <p className="pt-2 font-bold text-indigo-600">Total Outstanding: ₹{summary.pendingFees}</p>
             </div>
           ) : (
             <p className="text-slate-500">No fee record found.</p>

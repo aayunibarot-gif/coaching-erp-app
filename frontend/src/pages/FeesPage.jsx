@@ -3,27 +3,42 @@ import SectionHeader from "../components/SectionHeader";
 import Table from "../components/Table";
 import StatCard from "../components/StatCard";
 import { useAuth } from "../context/AuthContext";
-import { demoClasses, demoFees, demoUsers } from "../data/demo-data";
+import api from "../api/axios";
 
 export default function FeesPage() {
   const { user } = useAuth();
-  const [rows, setRows] = useState(demoFees);
-  const [form, setForm] = useState({
-    studentId: "",
-    classId: "",
-    totalAmount: "",
-    paidAmount: "",
-    pendingAmount: "",
-    dueDate: "2026-05-10",
-    status: "unpaid"
-  });
+  const [rows, setRows] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const students = demoUsers.filter((u) => u.role === "student");
+  const fetchData = async () => {
+    try {
+      if (user.role === "student") {
+        const feesRes = await api.get(`/fees?studentId=${user._id}`);
+        setRows(feesRes.data);
+      } else {
+        const [feesRes, usersRes, classesRes] = await Promise.all([
+          api.get("/fees"),
+          api.get("/users"),
+          api.get("/classes")
+        ]);
+        setRows(feesRes.data);
+        setStudents(usersRes.data.filter((u) => u.role === "student"));
+        setClasses(classesRes.data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch data", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const visibleRows =
-    user.role === "student"
-      ? rows.filter((row) => row.studentId?._id === user._id)
-      : rows;
+  React.useEffect(() => {
+    fetchData();
+  }, [user._id, user.role]);
+
+  const visibleRows = rows;
 
   const totals = useMemo(() => {
     const sourceRows = user.role === "student" ? visibleRows : rows;
@@ -42,13 +57,18 @@ export default function FeesPage() {
     };
   }, [rows, visibleRows]);
 
-  const submit = (e) => {
+  const [form, setForm] = useState({
+    studentId: "",
+    classId: "",
+    totalAmount: "",
+    paidAmount: "",
+    pendingAmount: "",
+    dueDate: "2026-05-10",
+    status: "unpaid"
+  });
+
+  const submit = async (e) => {
     e.preventDefault();
-
-    const student = students.find((s) => s._id === form.studentId);
-    const cls = demoClasses.find((c) => c._id === form.classId);
-
-    if (!student || !cls) return;
 
     const totalAmount = Number(form.totalAmount);
     const paidAmount = Number(form.paidAmount);
@@ -59,43 +79,42 @@ export default function FeesPage() {
     else if (paidAmount > 0 && pendingAmount > 0) status = "partial";
     else status = "unpaid";
 
-    setRows((prev) => [
-      {
-        _id: `f${Date.now()}`,
-        studentId: {
-          _id: student._id,
-          name: student.name,
-          studentId: student.studentId,
-          parentName: student.parentName,
-          parentPhone: student.parentPhone
-        },
-        classId: cls,
-        totalAmount,
-        paidAmount,
-        pendingAmount,
-        dueDate: form.dueDate,
-        status
-      },
-      ...prev
-    ]);
+    const payload = {
+      studentId: form.studentId,
+      classId: form.classId,
+      totalAmount,
+      paidAmount,
+      pendingAmount,
+      dueDate: form.dueDate,
+      status
+    };
 
-    setForm({
-      studentId: "",
-      classId: "",
-      totalAmount: "",
-      paidAmount: "",
-      pendingAmount: "",
-      dueDate: "2026-05-10",
-      status: "unpaid"
-    });
+    try {
+      await api.post("/fees", payload);
+      setForm({
+        studentId: "",
+        classId: "",
+        totalAmount: "",
+        paidAmount: "",
+        pendingAmount: "",
+        dueDate: "2026-05-10",
+        status: "unpaid"
+      });
+      fetchData();
+      alert("Fee record added successfully!");
+    } catch (err) {
+      console.error("Failed to add fee record", err);
+      alert("Failed to add fee record");
+    }
   };
 
-  const updateStatus = (rowId, newStatus) => {
-    setRows((prev) =>
-      prev.map((item) =>
-        item._id === rowId ? { ...item, status: newStatus } : item
-      )
-    );
+  const updateStatus = async (rowId, newStatus) => {
+    try {
+      await api.put(`/fees/${rowId}`, { status: newStatus });
+      fetchData();
+    } catch (err) {
+      console.error("Failed to update status", err);
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -172,7 +191,7 @@ export default function FeesPage() {
               required
             >
               <option value="">Select standard</option>
-              {demoClasses.map((c) => (
+              {classes.map((c) => (
                 <option key={c._id} value={c._id}>
                   {c.standardName}
                 </option>
