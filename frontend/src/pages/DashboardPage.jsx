@@ -19,7 +19,17 @@ export default function DashboardPage() {
   
   // 1. ALL HOOKS MUST BE AT THE VERY TOP
   const [pendingUsers, setPendingUsers] = useState([]);
-  const [dashboardData, setDashboardData] = useState(null);
+  const [dashboardData, setDashboardData] = useState({
+    totalStudents: 0,
+    totalTeachers: 0,
+    classWiseDistribution: [],
+    overallAttendance: 0,
+    pendingFeesCount: 0,
+    topPerformers: [],
+    recentNotices: [],
+    classesList: [],
+    lowAttendanceStudents: []
+  });
   const [loading, setLoading] = useState(true);
   
   // Student profile state
