@@ -122,10 +122,6 @@ export default function FeesPage() {
     );
   };
 
-  const visibleRows =
-    user.role === "student"
-      ? rows.filter((row) => row.studentId?._id === user._id)
-      : rows;
 
   return (
     <div className="space-y-6">

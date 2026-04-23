@@ -4,6 +4,15 @@ import Table from "../components/Table";
 import StatCard from "../components/StatCard";
 import { demoMarks, demoUsers, demoSubjects, demoClasses } from "../data/demo-data";
 import { useAuth } from "../context/AuthContext";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
 
 export default function MarksPage() {
   const { user } = useAuth();
@@ -232,6 +241,29 @@ export default function MarksPage() {
               rows={visibleMarks}
             />
           )}
+        </div>
+      )}
+
+      {user.role === "student" && visibleMarks.length > 0 && (
+        <div className="card">
+          <h2 className="mb-4 text-xl font-bold text-slate-900">Performance Graph</h2>
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={visibleMarks.map(m => ({
+                subject: m.subjectId.subjectName,
+                score: Math.round((m.obtainedMarks / m.maxMarks) * 100)
+              }))}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="subject" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                <Tooltip 
+                  cursor={{fill: '#f1f5f9'}}
+                  contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                />
+                <Line type="monotone" dataKey="score" stroke="#6366f1" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       )}
 

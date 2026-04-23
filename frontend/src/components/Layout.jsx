@@ -64,13 +64,23 @@ export default function Layout() {
                 </button>
               </div>
               
-              <div className="mt-6 flex items-center gap-3 rounded-2xl bg-white/5 p-3 border border-white/10">
-                <div className="h-10 w-10 rounded-xl bg-indigo-500 flex items-center justify-center text-lg shadow-inner">👤</div>
-                <div className="overflow-hidden">
-                  <p className="truncate text-sm font-bold">{user?.name}</p>
-                  <p className="truncate text-xs text-slate-400 capitalize">{user?.role}</p>
+              {user?.role === "student" ? (
+                <NavLink to="/profile" onClick={() => setIsMobileMenuOpen(false)} className="mt-6 flex items-center gap-3 rounded-2xl bg-white/5 p-3 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer">
+                  <div className="h-10 w-10 rounded-xl bg-indigo-500 flex items-center justify-center text-lg shadow-inner">👤</div>
+                  <div className="overflow-hidden">
+                    <p className="truncate text-sm font-bold">{user?.name}</p>
+                    <p className="truncate text-xs text-slate-400 capitalize">{user?.role}</p>
+                  </div>
+                </NavLink>
+              ) : (
+                <div className="mt-6 flex items-center gap-3 rounded-2xl bg-white/5 p-3 border border-white/10">
+                  <div className="h-10 w-10 rounded-xl bg-indigo-500 flex items-center justify-center text-lg shadow-inner">👤</div>
+                  <div className="overflow-hidden">
+                    <p className="truncate text-sm font-bold">{user?.name}</p>
+                    <p className="truncate text-xs text-slate-400 capitalize">{user?.role}</p>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Navigation Scroll Area */}
