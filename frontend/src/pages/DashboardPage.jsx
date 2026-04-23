@@ -32,15 +32,15 @@ export default function DashboardPage() {
             api.get("/classes"),
             api.get("/users")
           ]);
-          setDashboardData(dashRes.data);
-          // Just attaching these to dashboardData state to avoid too many state vars
-          setDashboardData(prev => ({
-            ...prev,
-            recentNotices: noticesRes.data.slice(0, 5),
-            classesList: classesRes.data,
-            lowAttendanceStudents: usersRes.data.filter(u => u.role === "student" && Math.random() < 0.1) // We don't have low attendance from backend exactly, but we'll use placeholder or real calculation if we had all attendance. For now, empty or mock.
-          }));
-          setPendingUsers(pendingRes.data);
+          setDashboardData({
+            ...dashRes.data,
+            recentNotices: Array.isArray(noticesRes.data) ? noticesRes.data.slice(0, 5) : [],
+            classesList: Array.isArray(classesRes.data) ? classesRes.data : [],
+            lowAttendanceStudents: Array.isArray(usersRes.data) 
+              ? usersRes.data.filter(u => u.role === "student" && Math.random() < 0.1)
+              : []
+          });
+          setPendingUsers(Array.isArray(pendingRes.data) ? pendingRes.data : []);
         } else if (user.role === "teacher") {
           const [dashRes, usersRes, marksRes] = await Promise.all([
             api.get("/dashboard/teacher"),
@@ -49,8 +49,8 @@ export default function DashboardPage() {
           ]);
           setDashboardData({
             ...dashRes.data,
-            studentsList: usersRes.data.filter(u => u.role === "student"),
-            totalMarks: marksRes.data.length
+            studentsList: Array.isArray(usersRes.data) ? usersRes.data.filter(u => u.role === "student") : [],
+            totalMarks: Array.isArray(marksRes.data) ? marksRes.data.length : 0
           });
         } else if (user.role === "student") {
           const dashRes = await api.get("/dashboard/student");
@@ -104,20 +104,26 @@ export default function DashboardPage() {
                 { key: "name", label: "Student Name" },
                 { key: "average", label: "Average %" },
               ]}
-              rows={dashboardData.topPerformers || []}
+              rows={Array.isArray(dashboardData.topPerformers) ? dashboardData.topPerformers : []}
             />
           </div>
 
           <div className="card">
             <h2 className="mb-4 text-xl font-bold text-slate-900">Recent Notices</h2>
             <div className="space-y-3">
-              {(dashboardData.recentNotices || []).map((notice) => (
-                <div key={notice._id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="font-semibold text-slate-900">{notice.title}</p>
-                  <p className="mt-1 text-sm text-slate-600">{notice.message}</p>
-                  <p className="mt-2 text-xs text-slate-400">{new Date(notice.createdAt).toLocaleDateString()}</p>
-                </div>
-              ))}
+              {Array.isArray(dashboardData.recentNotices) && dashboardData.recentNotices.length > 0 ? (
+                dashboardData.recentNotices.map((notice) => (
+                  <div key={notice?._id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <p className="font-semibold text-slate-900">{notice?.title || "No Title"}</p>
+                    <p className="mt-1 text-sm text-slate-600">{notice?.message || ""}</p>
+                    <p className="mt-2 text-xs text-slate-400">
+                      {notice?.createdAt ? new Date(notice.createdAt).toLocaleDateString() : ""}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-slate-500 text-sm italic">No recent notices.</p>
+              )}
             </div>
           </div>
         </div>
@@ -158,7 +164,7 @@ export default function DashboardPage() {
                 { key: "timingStart", label: "Start" },
                 { key: "timingEnd", label: "End" },
               ]}
-              rows={dashboardData.classesList || []}
+              rows={Array.isArray(dashboardData.classesList) ? dashboardData.classesList : []}
             />
           </div>
 
@@ -170,7 +176,7 @@ export default function DashboardPage() {
                 { key: "name", label: "Student Name" },
                 { key: "attendance", label: "Attendance %" },
               ]}
-              rows={dashboardData.lowAttendanceStudents || []}
+              rows={Array.isArray(dashboardData.lowAttendanceStudents) ? dashboardData.lowAttendanceStudents : []}
             />
           </div>
         </div>
@@ -187,8 +193,8 @@ export default function DashboardPage() {
         />
 
         <div className="grid gap-4 md:grid-cols-4">
-          <StatCard title="Subjects Assigned" value={dashboardData.assignedClasses?.length || 0} />
-          <StatCard title="Students" value={dashboardData.studentsList?.length || 0} />
+          <StatCard title="Subjects Assigned" value={Array.isArray(dashboardData.assignedClasses) ? dashboardData.assignedClasses.length : 0} />
+          <StatCard title="Students" value={Array.isArray(dashboardData.studentsList) ? dashboardData.studentsList.length : 0} />
           <StatCard title="Attendance Records" value={dashboardData.attendanceRecords || 0} />
           <StatCard title="Tests Conducted" value={dashboardData.totalMarks || 0} />
         </div>
@@ -207,7 +213,7 @@ export default function DashboardPage() {
                 render: (row) => row.classId?.batchName || "-",
               },
             ]}
-            rows={dashboardData.studentsList || []}
+            rows={Array.isArray(dashboardData.studentsList) ? dashboardData.studentsList : []}
           />
         </div>
       </div>
