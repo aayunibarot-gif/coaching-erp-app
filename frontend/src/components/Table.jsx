@@ -12,8 +12,10 @@ export default function Table({ columns, rows, onEdit, onDelete }) {
                 {columns.map((col) => (
                   <div key={col.key} className="flex justify-between border-b border-slate-50 pb-2 last:border-0">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{col.label}</span>
-                    <span className="text-sm font-semibold text-slate-700">
-                      {typeof col.render === "function" ? col.render(row) : row[col.key]}
+                    <span className="font-medium text-slate-700">
+                      {typeof col.render === "function" 
+                        ? col.render(row) 
+                        : (row && col.key in row ? String(row[col.key]) : "—")}
                     </span>
                   </div>
                 ))}
@@ -64,7 +66,9 @@ export default function Table({ columns, rows, onEdit, onDelete }) {
               <tr key={idx} className="hover:bg-slate-50 transition-colors">
                 {columns.map((col) => (
                   <td key={col.key} className="px-6 py-5 font-medium text-slate-700">
-                    {typeof col.render === "function" ? col.render(row) : row[col.key]}
+                    {typeof col.render === "function" 
+                      ? col.render(row) 
+                      : (row && col.key in row ? String(row[col.key]) : "—")}
                   </td>
                 ))}
                 {(onEdit || onDelete) && (
