@@ -82,10 +82,18 @@ export default function NoticesPage() {
   const visibleNotices = notices.filter(notice => {
     if (user.role === "admin" || user.role === "teacher") return true;
     
-    // For students
+    // For students, the backend already filters the notices.
+    // We just need to ensure the local filter doesn't incorrectly hide them.
+    // If targetType is missing (for older notices), we default to showing it if backend returned it.
+    if (!notice.targetType) return true;
     if (notice.targetType === "all") return true;
-    if (notice.targetType === "class" && notice.classId === user.classId?._id) return true;
-    if (notice.targetType === "student" && notice.studentId === user._id) return true;
+
+    const noticeClassId = notice.classId?._id || notice.classId;
+    const userClassId = user.classId?._id || user.classId;
+    if (notice.targetType === "class" && String(noticeClassId) === String(userClassId)) return true;
+
+    const noticeStudentId = notice.studentId?._id || notice.studentId;
+    if (notice.targetType === "student" && String(noticeStudentId) === String(user._id)) return true;
     
     return false;
   });

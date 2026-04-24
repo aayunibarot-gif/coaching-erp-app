@@ -1,20 +1,25 @@
 import Notification from "../models/Notification.js";
 
 export async function listNotifications(req, res) {
-  const role = req.user.role;
-  const classId = req.user.classId || req.query.classId || null;
+  const { role, _id, classId } = req.user;
 
+  if (role === "admin" || role === "teacher") {
+    // Admins and teachers see everything
+    const rows = await Notification.find({})
+      .populate("createdBy", "name")
+      .sort({ createdAt: -1 });
+    return res.json(rows);
+  }
+
+  // For students
   const query = {
     $or: [
       { audienceRole: "all" },
-      { audienceRole: role },
-      { studentId: req.user._id }
+      { targetType: "all", audienceRole: "student" },
+      { targetType: "class", classId: classId },
+      { targetType: "student", studentId: _id }
     ]
   };
-
-  if (classId) {
-    query.$or.push({ classId });
-  }
 
   const rows = await Notification.find(query)
     .populate("createdBy", "name")
