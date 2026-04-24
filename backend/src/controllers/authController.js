@@ -73,6 +73,7 @@ export const registerByAdmin = async (req, res) => {
       role,
       phone,
       classId: role === "student" ? validateObjectId(classId) : null,
+      isApproved: true,
     });
 
     const populated = await User.findById(user._id).populate("classId", "standardName batch batchName");
