@@ -88,16 +88,7 @@ export default function FeesPage() {
     status: "unpaid"
   });
 
-  // Auto-calculate pending amount
-  React.useEffect(() => {
-    const total = Number(form.totalAmount) || 0;
-    const paid = Number(form.paidAmount) || 0;
-    const pending = Math.max(0, total - paid);
-    
-    if (pending !== Number(form.pendingAmount)) {
-      setForm(prev => ({ ...prev, pendingAmount: pending }));
-    }
-  }, [form.totalAmount, form.paidAmount]);
+
 
   const submit = async (e) => {
     e.preventDefault();
@@ -237,7 +228,15 @@ export default function FeesPage() {
               className="input"
               type="number"
               value={form.totalAmount}
-              onChange={(e) => setForm({ ...form, totalAmount: e.target.value })}
+              onChange={(e) => {
+                const total = Number(e.target.value) || 0;
+                const paid = Number(form.paidAmount) || 0;
+                setForm({ 
+                  ...form, 
+                  totalAmount: e.target.value, 
+                  pendingAmount: Math.max(0, total - paid) 
+                });
+              }}
               required
             />
           </div>
@@ -248,7 +247,15 @@ export default function FeesPage() {
               className="input"
               type="number"
               value={form.paidAmount}
-              onChange={(e) => setForm({ ...form, paidAmount: e.target.value })}
+              onChange={(e) => {
+                const total = Number(form.totalAmount) || 0;
+                const paid = Number(e.target.value) || 0;
+                setForm({ 
+                  ...form, 
+                  paidAmount: e.target.value, 
+                  pendingAmount: Math.max(0, total - paid) 
+                });
+              }}
               required
             />
           </div>
