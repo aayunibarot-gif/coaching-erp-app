@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
-import { sendApprovalEmailToAdmin } from "../utils/email.js";
+import { sendApprovalEmailToAdmin, sendRegistrationPendingEmailToStudent } from "../utils/email.js";
 import { validateObjectId } from "../utils/validation.js";
 
 const generateToken = (id) => {
@@ -109,8 +109,9 @@ export const register = async (req, res) => {
       isApproved: false,
     });
 
-    // Send email to admin
+    // Send emails
     await sendApprovalEmailToAdmin(user.name, user.email);
+    await sendRegistrationPendingEmailToStudent(user.name, user.email);
 
     res.status(201).json({
       message: "Registration successful. Please wait for admin approval.",

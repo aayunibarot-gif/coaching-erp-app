@@ -116,3 +116,57 @@ export const sendApprovalSuccessEmailToStudent = async (studentName, studentEmai
   }
 };
 
+export const sendRegistrationPendingEmailToStudent = async (studentName, studentEmail) => {
+  const mailOptions = {
+    from: `"${APP_NAME}" <noreply@coaching-erp.com>`,
+    to: studentEmail,
+    subject: "Registration Successful - Pending Approval",
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden;">
+        <div style="background-color: ${PRIMARY_COLOR}; padding: 40px; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">Registration Received!</h1>
+        </div>
+        <div style="padding: 32px; background-color: white;">
+          <h2 style="color: #1e293b; margin-top: 0;">Hello ${studentName},</h2>
+          <p style="color: #475569; font-size: 16px; line-height: 1.6;">
+            Thank you for registering with <strong>${APP_NAME}</strong>.
+          </p>
+          <div style="background-color: #fff7ed; border-left: 4px solid #f97316; padding: 16px; margin: 24px 0;">
+            <p style="margin: 0; color: #9a3412; font-weight: bold; font-size: 16px;">
+              Your account is pending admin approval.
+            </p>
+            <p style="margin: 8px 0 0 0; color: #c2410c; font-size: 14px;">
+              We have notified the administrator. You will receive another email as soon as your account is activated.
+            </p>
+          </div>
+          <p style="color: #475569; font-size: 14px; margin-top: 32px;">
+            In the meantime, if you have any questions, feel free to contact us.
+          </p>
+          <p style="color: #475569; font-size: 14px; font-weight: bold; margin-bottom: 0;">Best Regards,</p>
+          <p style="color: #6366f1; font-size: 14px; font-weight: bold; margin-top: 4px;">The ${APP_NAME} Team</p>
+        </div>
+        <div style="background-color: #f1f5f9; padding: 16px; text-align: center; font-size: 12px; color: #94a3b8;">
+          &copy; ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.
+        </div>
+      </div>
+    `,
+  };
+
+  try {
+    if (!process.env.SMTP_USER || process.env.SMTP_USER === "user") {
+      console.log("-------------------------------------------------------");
+      console.log("EMAIL MOCK: Sending registration pending email to STUDENT...");
+      console.log(`To: ${mailOptions.to}`);
+      console.log(`Subject: ${mailOptions.subject}`);
+      console.log("-------------------------------------------------------");
+      return;
+    }
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Registration pending email sent to student: ${studentEmail}`);
+  } catch (error) {
+    console.error("Error sending registration pending email:", error);
+  }
+};
+
+
