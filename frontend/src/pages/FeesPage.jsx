@@ -17,23 +17,32 @@ export default function FeesPage() {
     try {
       if (user.role === "student") {
         const feesRes = await api.get(`/fees?studentId=${user._id}`);
-        setRows(feesRes.data);
+        setRows(Array.isArray(feesRes.data) ? feesRes.data : []);
       } else {
         // Individualized requests for robustness
         try {
           const res = await api.get("/fees");
-          setRows(res.data);
-        } catch (e) { console.error("Fees fetch failed", e); }
+          setRows(Array.isArray(res.data) ? res.data : []);
+        } catch (e) { 
+          console.error("Fees fetch failed", e);
+          setRows([]);
+        }
 
         try {
           const res = await api.get("/users");
-          setStudents(res.data.filter((u) => u.role === "student"));
-        } catch (e) { console.error("Users fetch failed", e); }
+          setStudents(Array.isArray(res.data) ? res.data.filter((u) => u.role === "student") : []);
+        } catch (e) { 
+          console.error("Users fetch failed", e);
+          setStudents([]);
+        }
 
         try {
           const res = await api.get("/classes");
-          setClasses(res.data);
-        } catch (e) { console.error("Classes fetch failed", e); }
+          setClasses(Array.isArray(res.data) ? res.data : []);
+        } catch (e) { 
+          console.error("Classes fetch failed", e);
+          setClasses([]);
+        }
       }
     } catch (err) {
       console.error("Failed to fetch data", err);
@@ -117,7 +126,8 @@ export default function FeesPage() {
       alert("Fee record added successfully!");
     } catch (err) {
       console.error("Failed to add fee record", err);
-      alert("Failed to add fee record");
+      const msg = err.response?.data?.message || "Failed to add fee record";
+      alert(msg);
     }
   };
 
@@ -246,7 +256,6 @@ export default function FeesPage() {
           <div>
             <label className="label">Pending Amount</label>
             <input
-              className="input"
               type="number"
               value={form.pendingAmount}
               readOnly
