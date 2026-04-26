@@ -16,9 +16,11 @@ const PRIMARY_COLOR = "#6366f1";
 
 export const sendApprovalEmailToAdmin = async (studentName, studentEmail, userId) => {
   const backendUrl = process.env.BACKEND_URL || "http://localhost:5000";
+  const adminEmail = process.env.ADMIN_EMAIL || "aayunibarot@gmail.com";
+  
   const mailOptions = {
-    from: `"${APP_NAME}" <noreply@coaching-erp.com>`,
-    to: process.env.ADMIN_EMAIL || "admin@coaching-erp.com",
+    from: `"${APP_NAME}" <${process.env.SMTP_USER}>`,
+    to: adminEmail,
     subject: `Action Required: New Registration - ${studentName}`,
     html: `
       <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;">
@@ -78,7 +80,7 @@ export const sendApprovalEmailToAdmin = async (studentName, studentEmail, userId
 
 export const sendApprovalSuccessEmailToStudent = async (studentName, studentEmail) => {
   const mailOptions = {
-    from: `"${APP_NAME}" <noreply@coaching-erp.com>`,
+    from: `"${APP_NAME}" <${process.env.SMTP_USER}>`,
     to: studentEmail,
     subject: "Welcome to Eduverse Coaching - Account Approved!",
     html: `
@@ -140,7 +142,7 @@ export const sendApprovalSuccessEmailToStudent = async (studentName, studentEmai
 
 export const sendRegistrationPendingEmailToStudent = async (studentName, studentEmail) => {
   const mailOptions = {
-    from: `"${APP_NAME}" <noreply@coaching-erp.com>`,
+    from: `"${APP_NAME}" <${process.env.SMTP_USER}>`,
     to: studentEmail,
     subject: "Registration Successful - Eduverse Coaching",
     html: `
