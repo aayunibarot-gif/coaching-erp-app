@@ -1,12 +1,13 @@
 import nodemailer from "nodemailer";
 
-// Create a transporter. For demo purposes, we will just log if no credentials are provided.
+// Create a transporter configured for Gmail or other SMTP services
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "smtp.mailtrap.io",
-  port: process.env.SMTP_PORT || 2525,
+  host: process.env.SMTP_HOST || "smtp.gmail.com",
+  port: parseInt(process.env.SMTP_PORT) || 465,
+  secure: process.env.SMTP_PORT == "465", // true for 465, false for other ports
   auth: {
-    user: process.env.SMTP_USER || "user",
-    pass: process.env.SMTP_PASS || "pass",
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
   },
 });
 
