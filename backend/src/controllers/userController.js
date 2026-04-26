@@ -188,3 +188,51 @@ export const approveUser = async (req, res) => {
 
   res.json({ message: "User approved successfully" });
 };
+
+export const approveDirect = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).send(`
+        <div style="font-family: sans-serif; text-align: center; margin-top: 50px;">
+          <h1 style="color: #ef4444;">User Not Found</h1>
+          <p>The student record could not be found. They may have already been deleted.</p>
+        </div>
+      `);
+    }
+
+    if (user.isApproved) {
+      return res.send(`
+        <div style="font-family: sans-serif; text-align: center; margin-top: 50px;">
+          <h1 style="color: #10b981;">Already Approved</h1>
+          <p>Student <strong>${user.name}</strong> is already approved and active.</p>
+          <a href="${process.env.CLIENT_URL || "http://localhost:5173"}" style="color: #6366f1;">Go to Dashboard</a>
+        </div>
+      `);
+    }
+
+    user.isApproved = true;
+    await user.save();
+
+    // Send success email to student
+    await sendApprovalSuccessEmailToStudent(user.name, user.email);
+
+    res.send(`
+      <div style="font-family: sans-serif; text-align: center; margin-top: 50px;">
+        <div style="font-size: 50px; margin-bottom: 20px;">✅</div>
+        <h1 style="color: #10b981;">Approval Successful!</h1>
+        <p>Student <strong>${user.name}</strong> has been approved and notified via email.</p>
+        <p style="color: #64748b;">You can now close this tab.</p>
+        <br />
+        <a href="${process.env.CLIENT_URL || "http://localhost:5173"}" 
+           style="background-color: #6366f1; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+          Go to Dashboard
+        </a>
+      </div>
+    `);
+  } catch (error) {
+    console.error("Direct approval error:", error);
+    res.status(500).send("An error occurred during approval.");
+  }
+};

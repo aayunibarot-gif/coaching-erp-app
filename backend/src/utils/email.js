@@ -14,7 +14,8 @@ const transporter = nodemailer.createTransport({
 const APP_NAME = "Eduverse Coaching";
 const PRIMARY_COLOR = "#6366f1";
 
-export const sendApprovalEmailToAdmin = async (studentName, studentEmail) => {
+export const sendApprovalEmailToAdmin = async (studentName, studentEmail, userId) => {
+  const backendUrl = process.env.BACKEND_URL || "http://localhost:5000";
   const mailOptions = {
     from: `"${APP_NAME}" <noreply@coaching-erp.com>`,
     to: process.env.ADMIN_EMAIL || "admin@coaching-erp.com",
@@ -29,7 +30,7 @@ export const sendApprovalEmailToAdmin = async (studentName, studentEmail) => {
             Hello Admin,
           </p>
           <p style="color: #1e293b; font-size: 16px; line-height: 1.6;">
-            A new user is waiting for your approval. Please review their details and grant access to the portal.
+            A new user is waiting for your approval. You can approve them directly using the button below or via the dashboard.
           </p>
           
           <div style="background-color: #f8fafc; border-radius: 16px; padding: 24px; margin: 32px 0; border: 1px solid #edf2f7;">
@@ -38,14 +39,15 @@ export const sendApprovalEmailToAdmin = async (studentName, studentEmail) => {
             <p style="margin: 4px 0 0 0; color: #6366f1; font-size: 16px; font-weight: 500;">${studentEmail}</p>
           </div>
 
-          <p style="color: #64748b; font-size: 15px; text-align: center; font-style: italic;">
-            "Kindly approve them to complete the registration process."
-          </p>
-
           <div style="text-align: center; margin-top: 40px;">
+            <a href="${backendUrl}/api/users/approve-direct/${userId}" 
+               style="background-color: #10b981; color: white; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; display: inline-block; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+              Approve Student Now
+            </a>
+            <br />
             <a href="${process.env.CLIENT_URL || "http://localhost:5173"}/login" 
-               style="background-color: ${PRIMARY_COLOR}; color: white; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; display: inline-block; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);">
-              Open Admin Dashboard
+               style="color: #6366f1; text-decoration: underline; font-weight: 600; font-size: 14px;">
+              Or View in Admin Dashboard
             </a>
           </div>
         </div>
@@ -62,6 +64,7 @@ export const sendApprovalEmailToAdmin = async (studentName, studentEmail) => {
       console.log("EMAIL MOCK: Sending email to admin...");
       console.log(`To: ${mailOptions.to}`);
       console.log(`Subject: ${mailOptions.subject}`);
+      console.log(`Direct Approval Link: ${backendUrl}/api/users/approve-direct/${userId}`);
       console.log("-------------------------------------------------------");
       return;
     }

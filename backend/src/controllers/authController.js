@@ -110,7 +110,7 @@ export const register = async (req, res) => {
     });
 
     // Send emails
-    await sendApprovalEmailToAdmin(user.name, user.email);
+    await sendApprovalEmailToAdmin(user.name, user.email, user._id);
     await sendRegistrationPendingEmailToStudent(user.name, user.email);
 
     res.status(201).json({
