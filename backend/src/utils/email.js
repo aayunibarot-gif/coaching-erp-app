@@ -62,20 +62,11 @@ export const sendApprovalEmailToAdmin = async (studentName, studentEmail, userId
   };
 
   try {
-    if (!process.env.SMTP_USER || process.env.SMTP_USER === "your-email@gmail.com" || process.env.SMTP_USER === "user") {
-      console.log("-------------------------------------------------------");
-      console.log("EMAIL MOCK: Sending email to admin...");
-      console.log(`To: ${mailOptions.to}`);
-      console.log(`Subject: ${mailOptions.subject}`);
-      console.log(`Direct Approval Link: ${backendUrl}/api/users/approve-direct/${userId}`);
-      console.log("-------------------------------------------------------");
-      return;
-    }
-
+    console.log(`[EMAIL] Attempting to send Admin Approval email to: ${adminEmail}`);
     await transporter.sendMail(mailOptions);
-    console.log("Approval notification sent to admin.");
+    console.log("[EMAIL] SUCCESS: Approval notification sent to admin.");
   } catch (error) {
-    console.error("Error sending admin notification:", error);
+    console.error("[EMAIL] ERROR: Failed to send admin notification:", error.message);
   }
 };
 
@@ -125,19 +116,11 @@ export const sendApprovalSuccessEmailToStudent = async (studentName, studentEmai
   };
 
   try {
-    if (!process.env.SMTP_USER || process.env.SMTP_USER === "your-email@gmail.com" || process.env.SMTP_USER === "user") {
-      console.log("-------------------------------------------------------");
-      console.log("EMAIL MOCK: Sending approval success email to STUDENT...");
-      console.log(`To: ${mailOptions.to}`);
-      console.log(`Subject: ${mailOptions.subject}`);
-      console.log("-------------------------------------------------------");
-      return;
-    }
-
+    console.log(`[EMAIL] Attempting to send Approval Success email to: ${studentEmail}`);
     await transporter.sendMail(mailOptions);
-    console.log(`Approval email sent to student: ${studentEmail}`);
+    console.log(`[EMAIL] SUCCESS: Approval email sent to student: ${studentEmail}`);
   } catch (error) {
-    console.error("Error sending student approval email:", error);
+    console.error("[EMAIL] ERROR: Failed to send student approval email:", error.message);
   }
 };
 
@@ -183,19 +166,11 @@ export const sendRegistrationPendingEmailToStudent = async (studentName, student
   };
 
   try {
-    if (!process.env.SMTP_USER || process.env.SMTP_USER === "your-email@gmail.com" || process.env.SMTP_USER === "user") {
-      console.log("-------------------------------------------------------");
-      console.log("EMAIL MOCK: Sending registration pending email to STUDENT...");
-      console.log(`To: ${mailOptions.to}`);
-      console.log(`Subject: ${mailOptions.subject}`);
-      console.log("-------------------------------------------------------");
-      return;
-    }
-
+    console.log(`[EMAIL] Attempting to send Registration Pending email to: ${studentEmail}`);
     await transporter.sendMail(mailOptions);
-    console.log(`Registration pending email sent to student: ${studentEmail}`);
+    console.log(`[EMAIL] SUCCESS: Registration pending email sent to student: ${studentEmail}`);
   } catch (error) {
-    console.error("Error sending registration pending email:", error);
+    console.error("[EMAIL] ERROR: Failed to send registration pending email:", error.message);
   }
 };
 
