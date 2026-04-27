@@ -125,8 +125,9 @@ export default function DashboardPage() {
 
   const approveUser = async (id) => {
     try {
-      await api.put(`/users/${id}/approve`);
+      await api.put(`/users/approve/${id}`);
       const response = await api.get("/users/pending");
+
       setPendingUsers(response.data);
     } catch (error) {
       console.error("Failed to approve user:", error);
