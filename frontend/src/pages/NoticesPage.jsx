@@ -24,6 +24,14 @@ export default function NoticesPage() {
     studentId: ""
   });
 
+  // Filters and Pagination
+  const [filterType, setFilterType] = useState("all_types"); // all_types, all (general), class, student
+  const [filterClassId, setFilterClassId] = useState("");
+  const [filterDate, setFilterDate] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
+
   const fetchData = async () => {
     try {
       if (user.role === "student" || user.role === "parent") {
@@ -94,24 +102,43 @@ export default function NoticesPage() {
     }
   };
 
-  const visibleNotices = notices.filter(notice => {
-    if (user.role === "admin" || user.role === "teacher") return true;
-    
-    // For students, the backend already filters the notices.
-    // We just need to ensure the local filter doesn't incorrectly hide them.
-    // If targetType is missing (for older notices), we default to showing it if backend returned it.
-    if (!notice.targetType) return true;
-    if (notice.targetType === "all") return true;
+  const { filteredAndSortedNotices, totalPages } = useMemo(() => {
+    // 1. First apply basic role-based access filtering
+    let list = notices.filter(notice => {
+      if (user.role === "admin" || user.role === "teacher") return true;
+      if (!notice.targetType || notice.targetType === "all") return true;
+      const noticeClassId = notice.classId?._id || notice.classId;
+      const userClassId = user.classId?._id || user.classId;
+      if (notice.targetType === "class" && String(noticeClassId) === String(userClassId)) return true;
+      const noticeStudentId = notice.studentId?._id || notice.studentId;
+      if (notice.targetType === "student" && String(noticeStudentId) === String(user._id)) return true;
+      return false;
+    });
 
-    const noticeClassId = notice.classId?._id || notice.classId;
-    const userClassId = user.classId?._id || user.classId;
-    if (notice.targetType === "class" && String(noticeClassId) === String(userClassId)) return true;
+    // 2. Apply User Filters (Type, Class, Date)
+    if (filterType !== "all_types") {
+      list = list.filter(n => n.targetType === filterType);
+    }
+    if (filterClassId) {
+      list = list.filter(n => (n.classId?._id || n.classId) === filterClassId);
+    }
+    if (filterDate) {
+      const searchDate = new Date(filterDate).toDateString();
+      list = list.filter(n => new Date(n.createdAt).toDateString() === searchDate);
+    }
 
-    const noticeStudentId = notice.studentId?._id || notice.studentId;
-    if (notice.targetType === "student" && String(noticeStudentId) === String(user._id)) return true;
+    // 3. Sort by Newest First
+    list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    const total = Math.ceil(list.length / itemsPerPage);
     
-    return false;
-  });
+    // 4. Paginate
+    const start = (currentPage - 1) * itemsPerPage;
+    const paginated = list.slice(start, start + itemsPerPage);
+
+    return { filteredAndSortedNotices: paginated, totalPages: total };
+  }, [notices, user, filterType, filterClassId, filterDate, currentPage]);
+
 
   return (
     <div className="space-y-6">
@@ -247,47 +274,147 @@ export default function NoticesPage() {
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {visibleNotices.map((notice) => (
-          <div key={notice._id} className="card relative group hover:shadow-lg transition">
-            {(user.role === "admin" || user.role === "teacher") && (
-              <button 
-                onClick={() => handleDelete(notice._id)}
-                className="absolute top-4 right-4 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition"
-              >
-                🗑️
-              </button>
-            )}
-            
-            <div className="flex items-center justify-between mb-2 pr-6">
-              <h2 className="text-lg font-bold text-slate-900 leading-tight">
-                {notice.title}
-              </h2>
-            </div>
+      {/* Filters Section */}
+      <div className="card flex flex-wrap gap-4 items-end">
+        <div>
+          <label className="label text-[10px] uppercase tracking-wider text-slate-400">Filter by Type</label>
+          <select 
+            className="input py-2 text-xs" 
+            value={filterType} 
+            onChange={(e) => { setFilterType(e.target.value); setCurrentPage(1); }}
+          >
+            <option value="all_types">All Types</option>
+            <option value="all">General Notices</option>
+            <option value="class">Standard Wise</option>
+            <option value="student">Personal Notices</option>
+          </select>
+        </div>
 
-            {notice.targetType && notice.targetType !== "all" && (
-              <span className="inline-block mb-3 px-2 py-0.5 rounded-md bg-indigo-50 text-[10px] font-bold text-indigo-600 uppercase tracking-wider">
-                {notice.targetType === "class" ? "Class Notice" : "Personal Notice"}
-              </span>
-            )}
-
-            <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
-              {notice.message}
-            </p>
-
-            <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-[11px] font-medium text-slate-400">
-                📅 {new Date(notice.createdAt).toLocaleDateString()}
-              </span>
-              {user.role === "admin" || user.role === "teacher" ? (
-                <span className="text-[11px] font-bold text-slate-900">
-                  By {notice.createdBy?.name || "Admin"}
-                </span>
-              ) : null}
-            </div>
+        {filterType === "class" && (
+          <div>
+            <label className="label text-[10px] uppercase tracking-wider text-slate-400">Select Standard</label>
+            <select 
+              className="input py-2 text-xs" 
+              value={filterClassId} 
+              onChange={(e) => { setFilterClassId(e.target.value); setCurrentPage(1); }}
+            >
+              <option value="">All Standards</option>
+              {classes.map(c => (
+                <option key={c._id} value={c._id}>{c.batchName}</option>
+              ))}
+            </select>
           </div>
-        ))}
+        )}
+
+        <div>
+          <label className="label text-[10px] uppercase tracking-wider text-slate-400">Filter by Date</label>
+          <input 
+            type="date" 
+            className="input py-2 text-xs" 
+            value={filterDate} 
+            onChange={(e) => { setFilterDate(e.target.value); setCurrentPage(1); }}
+          />
+        </div>
+
+        <button 
+          className="text-xs font-bold text-red-500 hover:underline pb-3 ml-auto"
+          onClick={() => {
+            setFilterType("all_types");
+            setFilterClassId("");
+            setFilterDate("");
+            setCurrentPage(1);
+          }}
+        >
+          Clear Filters
+        </button>
       </div>
+
+      {/* Notices Grid */}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {filteredAndSortedNotices.length > 0 ? (
+          filteredAndSortedNotices.map((notice) => (
+            <div key={notice._id} className="card relative group hover:shadow-lg transition flex flex-col h-full">
+              {(user.role === "admin" || user.role === "teacher") && (
+                <button 
+                  onClick={() => handleDelete(notice._id)}
+                  className="absolute top-4 right-4 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition"
+                >
+                  🗑️
+                </button>
+              )}
+              
+              <div className="flex items-center justify-between mb-2 pr-6">
+                <h2 className="text-lg font-bold text-slate-900 leading-tight">
+                  {notice.title}
+                </h2>
+              </div>
+
+              {notice.targetType && notice.targetType !== "all" && (
+                <span className="inline-block mb-3 px-2 py-0.5 rounded-md bg-indigo-50 text-[10px] font-bold text-indigo-600 uppercase tracking-wider w-fit">
+                  {notice.targetType === "class" ? "Class Notice" : "Personal Notice"}
+                </span>
+              )}
+
+              <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap flex-1">
+                {notice.message}
+              </p>
+
+              <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-[11px] font-medium text-slate-400">
+                  📅 {new Date(notice.createdAt).toLocaleDateString()}
+                </span>
+                {user.role === "admin" || user.role === "teacher" ? (
+                  <span className="text-[11px] font-bold text-slate-900">
+                    By {notice.createdBy?.name || "Admin"}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="col-span-full py-20 text-center card bg-slate-50 border-dashed border-2">
+            <p className="text-slate-500 italic">No notices found matching your criteria.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Pagination UI */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-4 mt-8 no-print">
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="btn-secondary px-6 disabled:opacity-50"
+          >
+            Previous
+          </button>
+          
+          <div className="flex gap-2">
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`h-10 w-10 rounded-xl font-bold transition-all ${
+                  currentPage === i + 1 
+                  ? "bg-slate-900 text-white shadow-lg shadow-slate-900/20" 
+                  : "bg-white text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="btn-secondary px-6 disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
+
     </div>
   );
 }
