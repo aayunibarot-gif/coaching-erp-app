@@ -236,14 +236,28 @@ export default function TimetablePage() {
 
             <div>
               <label className="label">Class Time</label>
-              <input
+              <select
                 className="input"
                 value={form.time}
                 onChange={(e) => setForm({ ...form, time: e.target.value })}
-                placeholder="08:00 AM - 09:00 AM"
                 required
-              />
+              >
+                <option value="">Select time slot</option>
+                <option>08:00 AM - 09:00 AM</option>
+                <option>09:00 AM - 10:00 AM</option>
+                <option>10:00 AM - 11:00 AM</option>
+                <option>11:00 AM - 12:00 PM</option>
+                <option>12:00 PM - 01:00 PM</option>
+                <option>01:00 PM - 02:00 PM</option>
+                <option>02:00 PM - 03:00 PM</option>
+                <option>03:00 PM - 04:00 PM</option>
+                <option>04:00 PM - 05:00 PM</option>
+                <option>05:00 PM - 06:00 PM</option>
+                <option>06:00 PM - 07:00 PM</option>
+                <option>07:00 PM - 08:00 PM</option>
+              </select>
             </div>
+
 
             <div className="flex gap-3">
               <button className="btn-primary w-full" type="submit">
