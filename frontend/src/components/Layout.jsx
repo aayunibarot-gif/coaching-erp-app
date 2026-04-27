@@ -58,7 +58,7 @@ export default function Layout() {
             <div className="p-8">
               <div className="flex items-center justify-between lg:block">
                 <div className="flex items-center gap-3">
-                  <img src="/logo.png" alt="Eduverse" className="h-10 w-10 rounded-lg bg-white p-1 shadow-md" />
+                  <img src="/logo.jpg" alt="Eduverse" className="h-10 w-10 rounded-lg bg-white p-1 shadow-md" />
                   <div>
                     <h2 className="text-xl font-black tracking-tight uppercase">EDUVERSE</h2>
                     <p className="text-[10px] font-bold tracking-[0.2em] text-indigo-400 uppercase">Growing with your verse</p>

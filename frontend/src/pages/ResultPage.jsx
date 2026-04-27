@@ -104,7 +104,7 @@ export default function ResultPage() {
               >
                 {/* School Header */}
                 <div className="text-center border-b-2 border-slate-800 pb-6 mb-6">
-                  <img src="/logo.png" alt="Eduverse Coaching" className="h-24 mx-auto mb-4" />
+                  <img src="/logo.jpg" alt="Eduverse Coaching" className="h-24 mx-auto mb-4" />
 
 
                   <div className="inline-block mt-4 px-6 py-1 bg-slate-900 text-white rounded-full text-sm font-bold uppercase tracking-widest">

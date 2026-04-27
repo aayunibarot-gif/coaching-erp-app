@@ -49,7 +49,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-lg">
         <div className="mb-6 flex justify-center">
           <img
-            src="/logo.png"
+            src="/logo.jpg"
             alt="Eduverse Coaching"
             className="h-32 object-contain"
           />
