@@ -41,11 +41,12 @@ export default function RegisterPage() {
       <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-lg">
         <div className="mb-6 flex justify-center">
           <img
-            src="/logo.jpg"
+            src="/logo.png"
             alt="Eduverse Coaching"
-            className="h-28 object-contain"
+            className="h-32 object-contain"
           />
         </div>
+
 
         <h2 className="text-center text-2xl font-bold text-slate-900">
           Student Registration
