@@ -17,8 +17,10 @@ export default function AssistantPage() {
       const { data } = await api.post("/assistant", { query });
       setResponse(data.text);
     } catch (error) {
-      setResponse("Sorry, I encountered an error. Please try again later.");
+      const msg = error.response?.data?.message || "Sorry, I encountered an error. Please try again later.";
+      setResponse(msg);
     } finally {
+
       setLoading(false);
     }
   };

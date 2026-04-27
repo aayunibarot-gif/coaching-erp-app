@@ -9,13 +9,23 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
 
 export async function instituteAssistant(req, res) {
   const { query } = req.body;
+  
+  if (!process.env.GEMINI_API_KEY) {
+    console.error("[Assistant] CRITICAL: GEMINI_API_KEY is missing from environment variables.");
+    return res.status(500).json({ 
+      message: "AI Assistant configuration is missing. Please ensure GEMINI_API_KEY is set in the environment." 
+    });
+  }
+
   if (!query) {
     return res.status(400).json({ message: "query is required." });
   }
+
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
   try {
     const role = req.user.role;
