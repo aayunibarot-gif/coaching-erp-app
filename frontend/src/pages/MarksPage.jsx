@@ -225,8 +225,18 @@ export default function MarksPage() {
           </div>
 
           <div>
-            <label className="label">Subject</label>
+            <div className="flex items-center justify-between">
+              <label className="label">Subject</label>
+              <button 
+                type="button"
+                onClick={() => navigate("/subjects")}
+                className="text-[10px] font-bold text-indigo-600 hover:underline"
+              >
+                + Manage Subjects
+              </button>
+            </div>
             <select
+
               className="input"
               value={form.subjectId}
               onChange={(e) => setForm({ ...form, subjectId: e.target.value })}

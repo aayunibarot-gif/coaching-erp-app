@@ -147,22 +147,12 @@ export default function SubjectsPage() {
           <div>
             <label className="label">Teacher</label>
             <select
-              className="input"
-              value={form.teacherId}
-              onChange={(e) => setForm({ ...form, teacherId: e.target.value })}
-            >
-              <option value="">Select teacher</option>
-              {teachers.map((t) => (
-                <option key={t._id} value={t._id}>
-                  {t.name} ({t.studentId})
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Optional Teacher Assignment - Hidden/Minimized as per '2 fields' request, but kept logic for compatibility */}
+          <input type="hidden" value={form.teacherId} />
 
-          <div className="flex gap-3">
+          <div className="flex gap-3 pt-2">
             <button className="btn-primary w-full">
-              {editingId ? "Update Subject" : "Add Subject"}
+              {editingId ? "Update Subject" : "➕ Add Subject to Standard"}
             </button>
 
             {editingId && (
