@@ -104,9 +104,9 @@ export default function ResultPage() {
               >
                 {/* School Header */}
                 <div className="text-center border-b-2 border-slate-800 pb-6 mb-6">
-                  <h1 className="text-4xl font-black tracking-widest text-slate-900 uppercase">EDUVERSE COACHING</h1>
-                  <p className="text-sm font-bold text-indigo-600 tracking-[0.3em] uppercase mt-1">Excellence in Education</p>
-                  <p className="text-xs text-slate-500 mt-2">Main Street, Academic Block, City Center</p>
+                  <img src="/logo.png" alt="Eduverse Coaching" className="h-24 mx-auto mb-4" />
+
+
                   <div className="inline-block mt-4 px-6 py-1 bg-slate-900 text-white rounded-full text-sm font-bold uppercase tracking-widest">
                     Academic Progress Report
                   </div>
