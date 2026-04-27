@@ -27,7 +27,7 @@ export async function instituteAssistant(req, res) {
       Attendance.find({ studentId }),
       Mark.find({ studentId }).populate("subjectId", "subjectName"),
       Fee.findOne({ studentId }).sort({ createdAt: -1 }),
-      Timetable.find({ classId: req.user.classId }).populate("periods.subjectId", "subjectName")
+      Timetable.find({ classId: req.user.classId })
     ]);
 
     if (!student) {
@@ -37,7 +37,7 @@ export async function instituteAssistant(req, res) {
     // 2. Prepare data summary for Gemini context
     const contextData = {
       studentName: student.name,
-      class: student.classId ? `${student.classId.standardName} - ${student.classId.section}` : "Not assigned",
+      class: student.classId ? `${student.classId.standardName} - ${student.classId.batchName || student.classId.batch}` : "Not assigned",
       attendance: {
         total: attendance.length,
         present: attendance.filter(a => a.status === 'present').length,
@@ -55,12 +55,11 @@ export async function instituteAssistant(req, res) {
       } : "No fee records found",
       timetable: timetableData.map(t => ({
         day: t.day,
-        periods: t.periods.map(p => ({
-          subject: p.subjectId?.subjectName,
-          time: `${p.startTime} - ${p.endTime}`
-        }))
+        subject: t.subject,
+        time: t.time
       }))
     };
+
 
     // 3. Initialize Gemini model
     const model = genAI.getGenerativeModel({ 
