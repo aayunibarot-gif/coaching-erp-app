@@ -5,9 +5,8 @@ import Mark from "../models/Mark.js";
 import Fee from "../models/Fee.js";
 import Timetable from "../models/Timetable.js";
 import ClassModel from "../models/Class.js";
-import dotenv from "dotenv";
 
-dotenv.config();
+
 
 
 
