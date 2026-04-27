@@ -21,23 +21,27 @@ export async function instituteAssistant(req, res) {
     const role = req.user.role;
     const studentId = role === "parent" ? req.user.linkedStudentId : req.user._id;
 
+    console.log(`[Assistant] Query from ${req.user.email} (Role: ${role}) for student ${studentId}`);
+
     // 1. Fetch all relevant context for the student
-    const [student, attendance, marks, fees, timetableData] = await Promise.all([
-      User.findById(studentId).populate("classId"),
+    const student = await User.findById(studentId).populate("classId");
+    
+    if (!student) {
+      console.error("[Assistant] Student not found for ID:", studentId);
+      return res.status(404).json({ message: "Student not found." });
+    }
+
+    const [attendance, marks, fees, timetableData] = await Promise.all([
       Attendance.find({ studentId }),
       Mark.find({ studentId }).populate("subjectId", "subjectName"),
       Fee.findOne({ studentId }).sort({ createdAt: -1 }),
-      Timetable.find({ classId: req.user.classId })
+      Timetable.find({ classId: student.classId?._id || student.classId })
     ]);
-
-    if (!student) {
-      return res.status(404).json({ message: "Student not found." });
-    }
 
     // 2. Prepare data summary for Gemini context
     const contextData = {
       studentName: student.name,
-      class: student.classId ? `${student.classId.standardName} - ${student.classId.batchName || student.classId.batch}` : "Not assigned",
+      class: student.classId ? `${student.classId.standardName} - ${student.classId.batchName}` : "Not assigned",
       attendance: {
         total: attendance.length,
         present: attendance.filter(a => a.status === 'present').length,
@@ -53,18 +57,19 @@ export async function instituteAssistant(req, res) {
         pendingAmount: fees.pendingAmount,
         totalAmount: fees.totalAmount
       } : "No fee records found",
-      timetable: timetableData.map(t => ({
+      timetable: (timetableData || []).map(t => ({
         day: t.day,
         subject: t.subject,
         time: t.time
       }))
     };
 
+    console.log("[Assistant] Context prepared. Calling Gemini...");
 
     // 3. Initialize Gemini model
     const model = genAI.getGenerativeModel({ 
       model: "gemini-1.5-flash",
-      systemInstruction: `You are the AI Assistant for "Coaching Institute ERP". 
+      systemInstruction: `You are the AI Assistant for "Eduverse Coaching Institute". 
       Your goal is to help students and parents by providing information about their own data.
       
       RULES:
@@ -79,16 +84,25 @@ export async function instituteAssistant(req, res) {
       ${JSON.stringify(contextData, null, 2)}`
     });
 
-    // 4. Generate response
-    const result = await model.generateContent(query);
-    const response = await result.response;
-    const text = response.text();
+    // 4. Generate response with safety catch
+    try {
+      const result = await model.generateContent(query);
+      const response = await result.response;
+      const text = response.text();
 
-    return res.json({ text });
+      if (!text) throw new Error("Empty response from AI");
+      
+      console.log("[Assistant] Success.");
+      return res.json({ text });
+    } catch (aiErr) {
+      console.error("[Assistant] Gemini Error:", aiErr);
+      return res.status(500).json({ message: "The AI is having trouble processing your data. Please try again." });
+    }
 
   } catch (error) {
-    console.error("Assistant Error:", error);
+    console.error("[Assistant] Internal Error:", error);
     return res.status(500).json({ message: "AI Assistant is currently unavailable. Please try again later." });
   }
 }
+
 
