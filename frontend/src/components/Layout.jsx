@@ -61,7 +61,8 @@ export default function Layout() {
                   <img src="/logo.png" alt="Eduverse" className="h-10 w-10 rounded-lg bg-white p-1 shadow-md" />
                   <div>
                     <h2 className="text-xl font-black tracking-tight uppercase">EDUVERSE</h2>
-                    <p className="text-[10px] font-bold tracking-[0.2em] text-indigo-400 uppercase">Coaching Institute</p>
+                    <p className="text-[10px] font-bold tracking-[0.2em] text-indigo-400 uppercase">Growing with your verse</p>
+
                   </div>
                 </div>
 
