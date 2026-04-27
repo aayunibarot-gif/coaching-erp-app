@@ -1,5 +1,4 @@
 import React, { useMemo, useState, useEffect } from "react";
-
 import SectionHeader from "../components/SectionHeader";
 import Table from "../components/Table";
 import StatCard from "../components/StatCard";
@@ -38,7 +37,7 @@ export default function SubjectsPage() {
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (user.role === "admin" || user.role === "teacher") {
       fetchData();
     }
@@ -115,45 +114,59 @@ export default function SubjectsPage() {
       <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
         <form onSubmit={submit} className="card space-y-4">
           <h2 className="text-xl font-bold text-slate-900">
-            {editingId ? "Edit Subject" : "Add Subject"}
+            {editingId ? "Edit Subject" : "➕ Add New Subject"}
           </h2>
+          <p className="text-sm text-slate-500">
+            Select a standard and enter the subject name. This subject will then appear in the Marks and Timetable dropdowns.
+          </p>
 
           <div>
-            <label className="label">Standard / Batch</label>
+            <label className="label">1. Select Standard / Batch</label>
             <select
               className="input"
               value={form.classId}
               onChange={(e) => setForm({ ...form, classId: e.target.value })}
               required
             >
-              <option value="">Select standard / batch</option>
+              <option value="">Choose standard...</option>
               {classes.map((cls) => (
                 <option key={cls._id} value={cls._id}>
-                  {cls.batchName}
+                  {cls.batchName || cls.standardName}
                 </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="label">Subject Name</label>
+            <label className="label">2. Subject Name</label>
             <input
               className="input"
+              placeholder="e.g. Mathematics, Physics..."
               value={form.subjectName}
               onChange={(e) => setForm({ ...form, subjectName: e.target.value })}
               required
             />
           </div>
 
-          <div>
-            <label className="label">Teacher</label>
+          <div className="pt-2">
+            <label className="label text-xs text-slate-400">Optional: Assign Teacher</label>
             <select
-          {/* Optional Teacher Assignment - Hidden/Minimized as per '2 fields' request, but kept logic for compatibility */}
-          <input type="hidden" value={form.teacherId} />
+              className="input text-xs py-2"
+              value={form.teacherId}
+              onChange={(e) => setForm({ ...form, teacherId: e.target.value })}
+            >
+              <option value="">No teacher assigned</option>
+              {teachers.map((t) => (
+                <option key={t._id} value={t._id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <div className="flex gap-3 pt-2">
             <button className="btn-primary w-full">
-              {editingId ? "Update Subject" : "➕ Add Subject to Standard"}
+              {editingId ? "Update Subject" : "➕ Add Subject"}
             </button>
 
             {editingId && (
@@ -168,7 +181,7 @@ export default function SubjectsPage() {
           <Table
             columns={[
               { key: "standardName", label: "Standard", render: (row) => row.classId?.standardName || "-" },
-              { key: "batch", label: "Batch", render: (row) => row.classId?.batch || "-" },
+              { key: "batch", label: "Batch", render: (row) => row.classId?.batchName || row.classId?.batch || "-" },
               { key: "subjectName", label: "Subject" },
               { key: "teacher", label: "Teacher", render: (row) => row.teacherId?.name || "-" },
               {
