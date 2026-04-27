@@ -1,9 +1,11 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import SectionHeader from "../components/SectionHeader";
 import Table from "../components/Table";
 import StatCard from "../components/StatCard";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
+
 import {
   LineChart,
   Line,
@@ -16,6 +18,8 @@ import {
 
 export default function MarksPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
   const [marks, setMarks] = useState([]);
   const [students, setStudents] = useState([]);
   const [classes, setClasses] = useState([]);

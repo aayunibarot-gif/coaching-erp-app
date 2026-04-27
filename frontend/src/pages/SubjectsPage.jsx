@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+
 import SectionHeader from "../components/SectionHeader";
 import Table from "../components/Table";
 import StatCard from "../components/StatCard";
