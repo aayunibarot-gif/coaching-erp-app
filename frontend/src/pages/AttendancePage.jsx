@@ -16,6 +16,8 @@ export default function AttendancePage() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [attendanceMap, setAttendanceMap] = useState({});
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -73,6 +75,11 @@ export default function AttendancePage() {
     if (!selectedClassData) return [];
     return students.filter((student) => student.classId?._id === selectedClassData._id);
   }, [students, selectedClassData]);
+
+  const filteredClassStudents = useMemo(() => {
+    return classStudents.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  }, [classStudents, searchTerm]);
+
 
   const classAttendanceHistory = attendanceRecords;
 
@@ -196,16 +203,51 @@ export default function AttendancePage() {
       </div>
 
       <div className="card">
-        <div className="mb-4">
-          <h2 className="text-xl font-bold text-slate-900">Mark Attendance</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Select present or absent for each student in the chosen batch
-          </p>
+        <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+
+          <div>
+            <h2 className="text-xl font-bold text-slate-900">Mark Attendance</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Select present or absent for each student in the chosen batch
+            </p>
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
+            <button 
+              onClick={() => {
+                const newMap = {};
+                classStudents.forEach(s => newMap[s._id] = "present");
+                setAttendanceMap(newMap);
+              }}
+              className="px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold hover:bg-emerald-200"
+            >
+              ✅ Mark All Present
+            </button>
+            <button 
+              onClick={() => {
+                const newMap = {};
+                classStudents.forEach(s => newMap[s._id] = "absent");
+                setAttendanceMap(newMap);
+              }}
+              className="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-bold hover:bg-red-200"
+            >
+              ❌ Mark All Absent
+            </button>
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <input
+            className="input w-full md:w-64"
+            placeholder="🔍 Search student by name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
 
         <div className="space-y-3">
-          {classStudents.length ? (
-            classStudents.map((student) => (
+          {filteredClassStudents.length ? (
+            filteredClassStudents.map((student) => (
               <div
                 key={student._id}
                 className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:flex-row md:items-center md:justify-between"

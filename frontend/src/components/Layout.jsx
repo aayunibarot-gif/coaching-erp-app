@@ -10,7 +10,9 @@ const navItems = [
   { to: "/timetable", label: "Timetable", emoji: "📅" },
   { to: "/attendance", label: "Attendance", emoji: "📝" },
   { to: "/marks", label: "Tests & Marks", emoji: "🏆" },
+  { to: "/results", label: "Report Card", emoji: "📜" },
   { to: "/materials", label: "Study Materials", emoji: "📂" },
+
   { to: "/fees", label: "Fees", emoji: "💰" },
   { to: "/notices", label: "Notices", emoji: "🔔" },
   { to: "/assistant", label: "AI Assistant", emoji: "🤖" },

@@ -1,6 +1,8 @@
 import nodemailer from "nodemailer";
+import "dotenv/config";
 
-// Create a transporter configured for Gmail or other SMTP services
+console.log("[DEBUG] email.js utility loaded (REAL GMAIL MODE)");
+
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -8,8 +10,8 @@ const transporter = nodemailer.createTransport({
     pass: process.env.SMTP_PASS,
   },
   tls: {
-    rejectUnauthorized: false,
-  },
+    rejectUnauthorized: false
+  }
 });
 
 const APP_NAME = "Eduverse Coaching";
@@ -24,49 +26,33 @@ export const sendApprovalEmailToAdmin = async (studentName, studentEmail, userId
     to: adminEmail,
     subject: `Action Required: New Registration - ${studentName}`,
     html: `
-      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;">
-        <div style="background: linear-gradient(135deg, ${PRIMARY_COLOR}, #4f46e5); padding: 40px 20px; text-align: center;">
-          <h1 style="color: white; margin: 0; font-size: 28px; letter-spacing: -0.5px;">New Approval Request</h1>
+      <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; background-color: #ffffff;">
+        <div style="text-align: center; margin-bottom: 20px;">
+           <h2 style="color: ${PRIMARY_COLOR}; margin: 0;">New Student Registration</h2>
         </div>
-        <div style="padding: 40px; background-color: white;">
-          <p style="color: #475569; font-size: 18px; line-height: 1.6; margin-bottom: 24px;">
-            Hello Admin,
-          </p>
-          <p style="color: #1e293b; font-size: 16px; line-height: 1.6;">
-            A new user is waiting for your approval. You can approve them directly using the button below or via the dashboard.
-          </p>
-          
-          <div style="background-color: #f8fafc; border-radius: 16px; padding: 24px; margin: 32px 0; border: 1px solid #edf2f7;">
-            <p style="margin: 0 0 8px 0; color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">User Details</p>
-            <p style="margin: 0; color: #1e293b; font-size: 20px; font-weight: 800;">${studentName}</p>
-            <p style="margin: 4px 0 0 0; color: #6366f1; font-size: 16px; font-weight: 500;">${studentEmail}</p>
-          </div>
-
-          <div style="text-align: center; margin-top: 40px;">
-            <a href="${backendUrl}/api/users/approve-direct/${userId}" 
-               style="background-color: #10b981; color: white; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; display: inline-block; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
-              Approve Student Now
-            </a>
-            <br />
-            <a href="${process.env.CLIENT_URL || "http://localhost:5173"}/login" 
-               style="color: #6366f1; text-decoration: underline; font-weight: 600; font-size: 14px;">
-              Or View in Admin Dashboard
-            </a>
-          </div>
+        <div style="padding: 20px; background-color: #f8fafc; border-radius: 8px;">
+          <p style="margin: 5px 0;"><strong>Student Name:</strong> ${studentName}</p>
+          <p style="margin: 5px 0;"><strong>Email Address:</strong> ${studentEmail}</p>
         </div>
-        <div style="background-color: #f8fafc; padding: 24px; text-align: center; font-size: 13px; color: #94a3b8; border-top: 1px solid #f1f5f9;">
-          &copy; ${new Date().getFullYear()} ${APP_NAME} &bull; Managed Excellence
+        <p style="margin-top: 20px; text-align: center; color: #475569;">This student is waiting for your approval to access the portal.</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${backendUrl}/api/users/approve-direct/${userId}" 
+             style="background-color: #10b981; color: white; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 18px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);">
+            Approve Student Now
+          </a>
         </div>
+        <hr style="border: 0; border-top: 1px solid #eee;" />
+        <p style="color: #94a3b8; font-size: 12px; text-align: center;">This is an automated notification from ${APP_NAME} ERP System.</p>
       </div>
     `,
   };
 
   try {
-    console.log(`[EMAIL] Attempting to send Admin Approval email to: ${adminEmail}`);
+    console.log(`[EMAIL] Sending REAL email to admin: ${adminEmail}`);
     await transporter.sendMail(mailOptions);
-    console.log("[EMAIL] SUCCESS: Approval notification sent to admin.");
+    console.log("[EMAIL] SUCCESS: Email delivered to your Gmail inbox!");
   } catch (error) {
-    console.error("[EMAIL] ERROR: Failed to send admin notification:", error.message);
+    console.error("[EMAIL] FAILED: Google still rejects your password. Error:", error.message);
   }
 };
 
@@ -76,51 +62,21 @@ export const sendApprovalSuccessEmailToStudent = async (studentName, studentEmai
     to: studentEmail,
     subject: "Welcome to Eduverse Coaching - Account Approved!",
     html: `
-      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;">
-        <div style="background: linear-gradient(135deg, ${PRIMARY_COLOR}, #4f46e5); padding: 50px 20px; text-align: center;">
-          <div style="background: white; width: 80px; height: 80px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-            <span style="font-size: 40px;">✅</span>
-          </div>
-          <h1 style="color: white; margin: 0; font-size: 32px; letter-spacing: -0.5px;">Account Approved!</h1>
-        </div>
-        <div style="padding: 40px; background-color: white;">
-          <h2 style="color: #1e293b; margin-top: 0; font-size: 22px; font-weight: 800;">Hello ${studentName},</h2>
-          <p style="color: #475569; font-size: 17px; line-height: 1.7;">
-            We are excited to inform you that your registration has been <strong>approved</strong>. Your gateway to excellence at <strong>${APP_NAME}</strong> is now open!
-          </p>
-          <p style="color: #475569; font-size: 16px; line-height: 1.6; margin-top: 16px;">
-            You can now log in to your dashboard to access your study materials, track your progress, and manage your academic journey.
-          </p>
-          
-          <div style="text-align: center; margin-top: 40px; margin-bottom: 40px;">
-            <a href="${process.env.CLIENT_URL || "http://localhost:5173"}/login" 
-               style="background-color: ${PRIMARY_COLOR}; color: white; padding: 18px 36px; border-radius: 14px; text-decoration: none; font-weight: 800; display: inline-block; box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4); transition: transform 0.2s ease;">
-              Access Your Dashboard
-            </a>
-          </div>
-
-          <div style="background-color: #f8fafc; border-radius: 16px; padding: 24px; border: 1px solid #edf2f7;">
-            <p style="margin: 0; color: #1e293b; font-size: 15px; line-height: 1.6;">
-              <strong>Need help?</strong> If you have any trouble logging in or have questions about your classes, our support team is just an email away.
-            </p>
-          </div>
-
-          <p style="color: #475569; font-size: 14px; font-weight: 700; margin-top: 40px; margin-bottom: 0;">Warm Welcome,</p>
-          <p style="color: ${PRIMARY_COLOR}; font-size: 15px; font-weight: 800; margin-top: 4px;">The ${APP_NAME} Team</p>
-        </div>
-        <div style="background-color: #f8fafc; padding: 24px; text-align: center; font-size: 13px; color: #94a3b8; border-top: 1px solid #f1f5f9;">
-          &copy; ${new Date().getFullYear()} ${APP_NAME} &bull; Your Success, Our Mission
-        </div>
+      <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+        <h2 style="color: #10b981;">Congratulations ${studentName}!</h2>
+        <p>Your account at <strong>Eduverse Coaching</strong> has been approved by the admin.</p>
+        <p>You can now log in to access your courses, marks, and fees information.</p>
+        <br />
+        <p>Welcome to the family!</p>
       </div>
     `,
   };
 
   try {
-    console.log(`[EMAIL] Attempting to send Approval Success email to: ${studentEmail}`);
     await transporter.sendMail(mailOptions);
-    console.log(`[EMAIL] SUCCESS: Approval email sent to student: ${studentEmail}`);
+    console.log(`[EMAIL] SUCCESS: Approval email sent to student.`);
   } catch (error) {
-    console.error("[EMAIL] ERROR: Failed to send student approval email:", error.message);
+    console.error("[EMAIL] Student email failed:", error.message);
   }
 };
 
@@ -130,48 +86,18 @@ export const sendRegistrationPendingEmailToStudent = async (studentName, student
     to: studentEmail,
     subject: "Registration Successful - Eduverse Coaching",
     html: `
-      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;">
-        <div style="background: linear-gradient(135deg, #10b981, #059669); padding: 40px 20px; text-align: center;">
-          <h1 style="color: white; margin: 0; font-size: 28px; letter-spacing: -0.5px;">Registration Successful!</h1>
-        </div>
-        <div style="padding: 40px; background-color: white;">
-          <h2 style="color: #1e293b; margin-top: 0; font-size: 22px; font-weight: 800;">Welcome, ${studentName}!</h2>
-          <p style="color: #475569; font-size: 16px; line-height: 1.6;">
-            You have successfully registered to <strong>${APP_NAME}</strong>. We are thrilled to have you join our academic community!
-          </p>
-          
-          <div style="background-color: #fffbeb; border-left: 5px solid #f59e0b; padding: 24px; margin: 32px 0; border-radius: 4px 12px 12px 4px;">
-            <p style="margin: 0; color: #92400e; font-weight: 800; font-size: 18px; margin-bottom: 8px;">
-              Wait for Admin Approval
-            </p>
-            <p style="margin: 0; color: #b45309; font-size: 15px; line-height: 1.5;">
-              Your account is currently under review by our administration. You will receive another notification once your access is activated.
-            </p>
-          </div>
-
-          <p style="color: #64748b; font-size: 14px; margin-top: 32px; text-align: center;">
-            While you wait, feel free to explore our website or contact support if you have any urgent queries.
-          </p>
-
-          <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 32px 0;" />
-
-          <p style="color: #475569; font-size: 14px; font-weight: 700; margin-bottom: 0;">Best Regards,</p>
-          <p style="color: ${PRIMARY_COLOR}; font-size: 15px; font-weight: 800; margin-top: 4px;">The ${APP_NAME} Team</p>
-        </div>
-        <div style="background-color: #f8fafc; padding: 24px; text-align: center; font-size: 13px; color: #94a3b8; border-top: 1px solid #f1f5f9;">
-          &copy; ${new Date().getFullYear()} ${APP_NAME} &bull; Empowering Your Future
-        </div>
+      <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+        <h2 style="color: ${PRIMARY_COLOR};">Registration Successful!</h2>
+        <p>Hello ${studentName},</p>
+        <p>Wait for admin approval. You are successfully registered to Eduverse Coaching.</p>
       </div>
     `,
   };
 
   try {
-    console.log(`[EMAIL] Attempting to send Registration Pending email to: ${studentEmail}`);
     await transporter.sendMail(mailOptions);
-    console.log(`[EMAIL] SUCCESS: Registration pending email sent to student: ${studentEmail}`);
+    console.log(`[EMAIL] SUCCESS: Registration pending email sent to student.`);
   } catch (error) {
-    console.error("[EMAIL] ERROR: Failed to send registration pending email:", error.message);
+    console.error("[EMAIL] Registration email failed:", error.message);
   }
 };
-
-

@@ -10,7 +10,9 @@ export default function TimetablePage() {
 
   const [rows, setRows] = useState([]);
   const [classes, setClasses] = useState([]);
+  const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
+
 
   const [form, setForm] = useState({
     day: "Monday",
@@ -23,12 +25,15 @@ export default function TimetablePage() {
 
   const fetchData = async () => {
     try {
-      const [timetableRes, classesRes] = await Promise.all([
+      const [timetableRes, classesRes, subjectsRes] = await Promise.all([
         api.get("/timetables"),
-        api.get("/classes")
+        api.get("/classes"),
+        api.get("/subjects")
       ]);
       setRows(timetableRes.data);
       setClasses(classesRes.data);
+      setSubjects(subjectsRes.data);
+
     } catch (err) {
       console.error("Failed to fetch data", err);
     } finally {
@@ -109,7 +114,13 @@ export default function TimetablePage() {
     }
   };
 
+  const filteredSubjects = useMemo(() => {
+    if (!form.classId) return [];
+    return subjects.filter((s) => (s.classId?._id || s.classId) === form.classId);
+  }, [subjects, form.classId]);
+
   const studentRows = useMemo(() => {
+
     if (!user?.classId) return [];
 
     return rows.filter(
@@ -204,14 +215,24 @@ export default function TimetablePage() {
 
             <div>
               <label className="label">Subject</label>
-              <input
+              <select
                 className="input"
                 value={form.subject}
                 onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                placeholder="Mathematics"
                 required
-              />
+                disabled={!form.classId}
+              >
+                <option value="">
+                  {!form.classId ? "Select standard first" : "Select subject"}
+                </option>
+                {filteredSubjects.map((s) => (
+                  <option key={s._id} value={s.subjectName}>
+                    {s.subjectName}
+                  </option>
+                ))}
+              </select>
             </div>
+
 
             <div>
               <label className="label">Class Time</label>

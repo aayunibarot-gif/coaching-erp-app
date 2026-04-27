@@ -89,6 +89,7 @@ export const registerByAdmin = async (req, res) => {
 };
 
 export const register = async (req, res) => {
+  console.log(">>>> REGISTER TRIGGERED for:", req.body.email);
   try {
     const { name, email, password, phone, classId } = req.body;
 

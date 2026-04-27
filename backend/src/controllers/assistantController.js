@@ -1,10 +1,15 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import User from "../models/User.js";
 import Attendance from "../models/Attendance.js";
 import Mark from "../models/Mark.js";
 import Fee from "../models/Fee.js";
 import Timetable from "../models/Timetable.js";
 import ClassModel from "../models/Class.js";
-import { computeAttendanceStatus, computeMarksLevel, computeTrend } from "../utils/helpers.js";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 export async function instituteAssistant(req, res) {
   const { query } = req.body;
@@ -12,115 +17,79 @@ export async function instituteAssistant(req, res) {
     return res.status(400).json({ message: "query is required." });
   }
 
-  const lowered = query.toLowerCase();
-  const role = req.user.role;
-  const studentId = role === "parent" ? req.user.linkedStudentId : req.user._id;
+  try {
+    const role = req.user.role;
+    const studentId = role === "parent" ? req.user.linkedStudentId : req.user._id;
 
-  if (lowered === "hi" || lowered === "hello") {
-    return res.json({
-      title: "Welcome to Coaching Institute ERP System",
-      options: ["Attendance", "Marks", "Fees", "Timetable", "Performance"]
-    });
-  }
+    // 1. Fetch all relevant context for the student
+    const [student, attendance, marks, fees, timetableData] = await Promise.all([
+      User.findById(studentId).populate("classId"),
+      Attendance.find({ studentId }),
+      Mark.find({ studentId }).populate("subjectId", "subjectName"),
+      Fee.findOne({ studentId }).sort({ createdAt: -1 }),
+      Timetable.find({ classId: req.user.classId }).populate("periods.subjectId", "subjectName")
+    ]);
 
-  if ((role === "student" || role === "parent") && lowered.includes("attendance")) {
-    const records = await Attendance.find({ studentId });
-    if (!records.length) {
-      return res.json({ message: "I don't have enough data to answer that." });
+    if (!student) {
+      return res.status(404).json({ message: "Student not found." });
     }
-    const present = records.filter((r) => r.status === "present").length;
-    const percentage = Number(((present / records.length) * 100).toFixed(2));
-    const student = await User.findById(studentId).populate("classId");
-    return res.json({
-      heading: "Attendance Report",
-      class: `${student.classId.standardName} ${student.classId.section}`,
-      attendance: `${percentage}%`,
-      insight: computeAttendanceStatus(percentage),
-      suggestion: percentage < 75 ? "Attend classes regularly and avoid missing timetable slots." : "Keep maintaining your consistency."
-    });
-  }
 
-  if ((role === "student" || role === "parent") && lowered.includes("marks")) {
-    const student = await User.findById(studentId).populate("classId");
-    const marks = await Mark.find({ studentId }).populate("subjectId", "subjectName");
-    if (!marks.length) {
-      return res.json({ message: "I don't have enough data to answer that." });
-    }
-    const subjectLines = marks.map((m) => ({
-      subject: m.subjectId?.subjectName || "Unknown",
-      score: `${m.obtainedMarks}/${m.maxMarks}`,
-      remark: computeMarksLevel(m.obtainedMarks)
-    }));
-    const weak = subjectLines.filter((s) => s.remark === "Weak").map((s) => s.subject);
-    const strong = subjectLines.filter((s) => s.remark === "Good").map((s) => s.subject);
-
-    return res.json({
-      heading: "Academic Performance",
-      class: `${student.classId.standardName} ${student.classId.section}`,
-      subjects: subjectLines,
-      analysis: {
-        weakSubjects: weak,
-        strongSubjects: strong
+    // 2. Prepare data summary for Gemini context
+    const contextData = {
+      studentName: student.name,
+      class: student.classId ? `${student.classId.standardName} - ${student.classId.section}` : "Not assigned",
+      attendance: {
+        total: attendance.length,
+        present: attendance.filter(a => a.status === 'present').length,
+        percentage: attendance.length > 0 ? ((attendance.filter(a => a.status === 'present').length / attendance.length) * 100).toFixed(2) + "%" : "No records"
       },
-      suggestions: weak.length ? weak.map((s) => `Improve ${s} with weekly revision and test practice.`) : ["You are doing well across your subjects."]
-    });
-  }
-
-  if ((role === "student" || role === "parent") && lowered.includes("fees")) {
-    const fee = await Fee.findOne({ studentId }).sort({ createdAt: -1 });
-    if (!fee) {
-      return res.json({ message: "I don't have enough data to answer that." });
-    }
-    return res.json({
-      heading: "Fees Status",
-      status: fee.status,
-      pendingAmount: fee.pendingAmount,
-      reminder: fee.pendingAmount > 0 ? "Please pay pending fees before due date." : "All fees are clear."
-    });
-  }
-
-  if ((role === "student" || role === "parent") && lowered.includes("timetable")) {
-    const student = await User.findById(studentId);
-    const classInfo = await ClassModel.findById(student.classId);
-    const rows = await Timetable.find({ classId: student.classId }).populate("periods.subjectId", "subjectName");
-    if (!rows.length || !classInfo) {
-      return res.json({ message: "I don't have enough data to answer that." });
-    }
-    return res.json({
-      heading: "Class Timetable",
-      class: `${classInfo.standardName} ${classInfo.section}`,
-      timing: `${classInfo.timingStart} to ${classInfo.timingEnd}`,
-      schedule: rows.map((row) => ({
-        day: row.day,
-        periods: row.periods.map((p) => ({
-          subject: p.subjectId?.subjectName || "Unknown",
-          startTime: p.startTime,
-          endTime: p.endTime
+      academicPerformance: marks.map(m => ({
+        subject: m.subjectId?.subjectName || "Unknown",
+        marks: `${m.obtainedMarks}/${m.maxMarks}`,
+        date: m.examDate || "N/A"
+      })),
+      feeStatus: fees ? {
+        status: fees.status,
+        pendingAmount: fees.pendingAmount,
+        totalAmount: fees.totalAmount
+      } : "No fee records found",
+      timetable: timetableData.map(t => ({
+        day: t.day,
+        periods: t.periods.map(p => ({
+          subject: p.subjectId?.subjectName,
+          time: `${p.startTime} - ${p.endTime}`
         }))
       }))
-    });
-  }
+    };
 
-  if ((role === "student" || role === "parent") && lowered.includes("performance")) {
-    const marks = await Mark.find({ studentId }).populate("subjectId", "subjectName").sort({ examDate: 1 });
-    if (!marks.length) {
-      return res.json({ message: "I don't have enough data to answer that." });
-    }
-    const overallTrend = computeTrend(marks.map((m) => m.obtainedMarks));
-    const weakAreas = marks.filter((m) => m.obtainedMarks < 40).map((m) => m.subjectId?.subjectName || "Unknown");
-    const strengths = marks.filter((m) => m.obtainedMarks > 70).map((m) => m.subjectId?.subjectName || "Unknown");
-    return res.json({
-      heading: "Performance Summary",
-      trend: overallTrend,
-      strengths: [...new Set(strengths)],
-      weakAreas: [...new Set(weakAreas)],
-      improvementPlan: weakAreas.length
-        ? ["Revise weak topics weekly.", "Solve extra practice questions.", "Attend teacher doubt sessions."]
-        : ["Continue your current study routine."]
+    // 3. Initialize Gemini model
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash",
+      systemInstruction: `You are the AI Assistant for "Coaching Institute ERP". 
+      Your goal is to help students and parents by providing information about their own data.
+      
+      RULES:
+      1. ONLY answer based on the provided student context.
+      2. If you don't have information about something in the context, politely say you don't have that data yet.
+      3. Use a helpful, encouraging, and professional tone.
+      4. DO NOT answer general questions unrelated to the coaching institute or the student's data.
+      5. Format your response in clean Markdown. Use bullet points and bold text for readability.
+      6. If the query is just a greeting, welcome them and mention you can help with their attendance, marks, fees, and timetable.
+      
+      CONTEXT:
+      ${JSON.stringify(contextData, null, 2)}`
     });
-  }
 
-  return res.json({
-    message: "I don't have enough data to answer that."
-  });
+    // 4. Generate response
+    const result = await model.generateContent(query);
+    const response = await result.response;
+    const text = response.text();
+
+    return res.json({ text });
+
+  } catch (error) {
+    console.error("Assistant Error:", error);
+    return res.status(500).json({ message: "AI Assistant is currently unavailable. Please try again later." });
+  }
 }
+

@@ -18,6 +18,8 @@ import remarkRoutes from "./routes/remarkRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import assistantRoutes from "./routes/assistantRoutes.js";
+import resultRoutes from "./routes/resultRoutes.js";
+
 import materialRoutes from "./routes/materialRoutes.js";
 import path from "path";
 
@@ -48,6 +50,10 @@ app.use(
 
 app.use(express.json());
 app.use(morgan("dev"));
+app.use((req, res, next) => {
+  console.log(`[API] ${req.method} ${req.url}`);
+  next();
+});
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.use(
@@ -71,6 +77,8 @@ app.use("/api/remarks", remarkRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/assistant", assistantRoutes);
+app.use("/api/results", resultRoutes);
+
 app.use("/api/materials", materialRoutes);
 
 app.use(notFound);

@@ -20,6 +20,8 @@ import AssistantPage from "./pages/AssistantPage";
 import StudentDetailsPage from "./pages/StudentDetailsPage";
 import MaterialsPage from "./pages/MaterialsPage";
 import ProfilePage from "./pages/ProfilePage";
+import ResultPage from "./pages/ResultPage";
+
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -61,8 +63,10 @@ export default function App() {
         <Route path="notices" element={<NoticesPage />} />
         <Route path="assistant" element={<AssistantPage />} />
         <Route path="profile" element={<ProfilePage />} />
+        <Route path="results" element={<ResultPage />} />
         <Route path="students/:id" element={<StudentDetailsPage />} />
       </Route>
+
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
