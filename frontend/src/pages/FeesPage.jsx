@@ -14,9 +14,7 @@ export default function FeesPage() {
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedClassId, setSelectedClassId] = useState("");
-  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-  const [selectedFee, setSelectedFee] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+
 
   const fetchData = async () => {
     try {
@@ -176,30 +174,7 @@ export default function FeesPage() {
     doc.save(`Fee_Receipt_${row.studentId?.name || "Student"}.pdf`);
   };
 
-  const handlePayClick = (row) => {
-    setSelectedFee(row);
-    setPaymentModalOpen(true);
-  };
 
-  const processPayment = async (e) => {
-    e.preventDefault();
-    setIsProcessing(true);
-    
-    // Simulate payment delay
-    setTimeout(async () => {
-      try {
-        await api.put(`/fees/${selectedFee._id}`, { paidAmount: selectedFee.totalAmount });
-        setPaymentModalOpen(false);
-        setIsProcessing(false);
-        fetchData();
-        alert("Payment successful! Fee status updated.");
-      } catch (err) {
-        console.error("Payment failed", err);
-        setIsProcessing(false);
-        alert("Payment failed.");
-      }
-    }, 2000);
-  };
 
   const getStatusBadge = (status) => {
     if (status === "paid") {
@@ -411,14 +386,6 @@ export default function FeesPage() {
                     >
                       📄 Receipt
                     </button>
-                    {user.role === "student" && row.status !== "paid" && (
-                      <button 
-                        onClick={() => handlePayClick(row)}
-                        className="text-[10px] font-bold text-emerald-600 hover:underline flex items-center gap-1"
-                      >
-                        💳 Pay Now
-                      </button>
-                    )}
                   </div>
                   {(user.role === "admin" || user.role === "teacher") && (
                     <div className="flex gap-2">
@@ -444,47 +411,7 @@ export default function FeesPage() {
         />
       </div>
 
-      {/* Dummy Payment Modal */}
-      {paymentModalOpen && selectedFee && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden">
-            <div className="bg-slate-900 p-6 text-center">
-              <h3 className="text-xl font-bold text-white">Secure Payment</h3>
-              <p className="text-slate-400 text-sm mt-1">Complete your fee payment securely</p>
-            </div>
-            <div className="p-6">
-              <div className="flex justify-between mb-6 pb-6 border-b border-slate-100">
-                <span className="text-slate-500 font-semibold">Amount to Pay</span>
-                <span className="text-2xl font-black text-slate-900">₹{selectedFee.pendingAmount}</span>
-              </div>
-              
-              <form onSubmit={processPayment} className="space-y-4">
-                <div>
-                  <label className="label">Card Number (Dummy)</label>
-                  <input type="text" required className="input" placeholder="XXXX XXXX XXXX XXXX" defaultValue="4242 4242 4242 4242" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="label">Expiry</label>
-                    <input type="text" required className="input" placeholder="MM/YY" defaultValue="12/25" />
-                  </div>
-                  <div>
-                    <label className="label">CVV</label>
-                    <input type="text" required className="input" placeholder="123" defaultValue="123" />
-                  </div>
-                </div>
-                
-                <div className="flex gap-3 pt-4">
-                  <button type="button" onClick={() => setPaymentModalOpen(false)} className="px-4 py-3 rounded-xl font-bold text-slate-500 bg-slate-100 flex-1">Cancel</button>
-                  <button type="submit" disabled={isProcessing} className="px-4 py-3 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-500 flex-1 flex justify-center">
-                    {isProcessing ? "Processing..." : "Pay Securely"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }
