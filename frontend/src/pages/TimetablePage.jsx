@@ -12,7 +12,7 @@ export default function TimetablePage() {
   const [classes, setClasses] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const [serverWaking, setServerWaking] = useState(false);
 
   const [form, setForm] = useState({
     day: "Monday",
@@ -23,7 +23,7 @@ export default function TimetablePage() {
 
   const [editingId, setEditingId] = useState(null);
 
-  const fetchData = async () => {
+  const fetchData = async (isRetry = false) => {
     try {
       const [timetableRes, classesRes, subjectsRes] = await Promise.all([
         api.get("/timetables"),
@@ -33,7 +33,14 @@ export default function TimetablePage() {
       setRows(timetableRes.data);
       setClasses(classesRes.data);
       setSubjects(subjectsRes.data);
+      setServerWaking(false);
 
+      // If classes came back empty and this isn't already a retry, retry after 3s
+      // (handles Render cold-start where first request returns empty)
+      if (!isRetry && classesRes.data.length === 0) {
+        setServerWaking(true);
+        setTimeout(() => fetchData(true), 3000);
+      }
     } catch (err) {
       console.error("Failed to fetch data", err);
     } finally {
@@ -167,6 +174,12 @@ export default function TimetablePage() {
           title="Class Timetable"
           subtitle="Timetable updated here will also be visible to students of the respective standard and batch"
         />
+
+        {serverWaking && (
+          <div className="rounded-2xl bg-amber-50 border border-amber-200 px-5 py-3 text-sm font-semibold text-amber-700 flex items-center gap-2">
+            ⏳ Server is waking up, loading standards... please wait a moment.
+          </div>
+        )}
 
         <div className="grid gap-4 md:grid-cols-3">
           <StatCard title="Total Classes" value={rows.length} />
