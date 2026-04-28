@@ -12,6 +12,10 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
 } from "recharts";
 
 export default function DashboardPage() {
@@ -275,6 +279,40 @@ export default function DashboardPage() {
             />
           </div>
         </div>
+
+        <div className="grid gap-6 lg:grid-cols-2 mt-6">
+          <div className="card lg:col-span-2">
+            <h2 className="mb-4 text-xl font-bold text-slate-900">Student Distribution</h2>
+            {dashboardData.classWiseDistribution?.length > 0 ? (
+              <div className="h-64 w-full flex justify-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={dashboardData.classWiseDistribution}
+                      dataKey="students"
+                      nameKey="className"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {dashboardData.classWiseDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6"][index % 7]} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value) => [value, 'Students']}
+                      contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                    />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <p className="text-slate-500">No data available.</p>
+            )}
+          </div>
+        </div>
       </div>
     );
   } else if (user.role === "teacher" && dashboardData) {
@@ -311,7 +349,7 @@ export default function DashboardPage() {
         </div>
       </div>
     );
-  } else if (user.role === "student") {
+  } else if (user.role === "student" || user.role === "parent") {
     const studentMarks = dashboardData?.marks || [];
     const studentFees = dashboardData?.fees || null;
     const studentAttendancePercent = dashboardData?.attendancePercent || 0;
@@ -319,8 +357,8 @@ export default function DashboardPage() {
     content = (
       <div className="space-y-6">
         <SectionHeader
-          title="Student Dashboard"
-          subtitle="Your profile, attendance, marks and fee summary"
+          title={user.role === "parent" ? "Parent Dashboard" : "Student Dashboard"}
+          subtitle={user.role === "parent" ? "Your child's attendance, marks and fee summary" : "Your profile, attendance, marks and fee summary"}
         />
 
         <div className="grid gap-4 md:grid-cols-4">

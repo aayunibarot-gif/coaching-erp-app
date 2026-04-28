@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["admin", "teacher", "student"],
+      enum: ["admin", "teacher", "student", "parent"],
       default: "student",
     },
 
@@ -45,6 +45,12 @@ const userSchema = new mongoose.Schema(
     parentPhone: {
       type: String,
       default: "",
+    },
+
+    linkedStudentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
     },
 
     classId: {

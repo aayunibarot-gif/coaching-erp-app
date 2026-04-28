@@ -13,7 +13,8 @@ const initialForm = {
   phone: "",
   parentName: "",
   parentPhone: "",
-  classId: ""
+  classId: "",
+  linkedStudentId: ""
 };
 
 // Generates a secure random password like: Tr8@kZ#mP2!
@@ -110,6 +111,7 @@ export default function AdminUsersPage() {
       parentName: form.role === "student" ? form.parentName : "",
       parentPhone: form.role === "student" ? form.parentPhone : "",
       classId: form.role === "student" && form.classId ? form.classId : null,
+      linkedStudentId: form.role === "parent" && form.linkedStudentId ? form.linkedStudentId : null,
     };
 
     if (form.password) {
@@ -120,7 +122,10 @@ export default function AdminUsersPage() {
     }
 
     if (!editingId) {
-      payload.studentId = form.role === "student" ? generateStudentId() : generateTeacherId();
+      if (form.role === "student") payload.studentId = generateStudentId();
+      else if (form.role === "teacher") payload.studentId = generateTeacherId();
+      else if (form.role === "parent") payload.studentId = `PAR${String(3000 + rows.filter(r => r.role === "parent").length + 1)}`;
+      else payload.studentId = `ADM${String(Math.floor(Math.random() * 1000))}`;
     }
 
     try {
@@ -147,7 +152,8 @@ export default function AdminUsersPage() {
       phone: row.phone || "",
       parentName: row.parentName || "",
       parentPhone: row.parentPhone || "",
-      classId: row.classId?._id || ""
+      classId: row.classId?._id || "",
+      linkedStudentId: row.linkedStudentId || ""
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -363,6 +369,7 @@ export default function AdminUsersPage() {
             >
               <option value="student">Student</option>
               <option value="teacher">Teacher</option>
+              <option value="parent">Parent</option>
               {user.role === "admin" && <option value="admin">Admin</option>}
             </select>
           </div>
@@ -430,6 +437,23 @@ export default function AdminUsersPage() {
                 </select>
               </div>
             </>
+          )}
+
+          {form.role === "parent" && (
+            <div>
+              <label className="label">Link to Student</label>
+              <select
+                className="input"
+                value={form.linkedStudentId}
+                onChange={(e) => setForm({ ...form, linkedStudentId: e.target.value })}
+                required
+              >
+                <option value="">Select Student</option>
+                {rows.filter(r => r.role === "student").map(s => (
+                  <option key={s._id} value={s._id}>{s.studentId} • {s.name}</option>
+                ))}
+              </select>
+            </div>
           )}
 
           <div className="flex gap-3">

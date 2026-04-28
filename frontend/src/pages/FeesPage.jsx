@@ -4,6 +4,8 @@ import Table from "../components/Table";
 import StatCard from "../components/StatCard";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 export default function FeesPage() {
   const { user } = useAuth();
@@ -12,6 +14,9 @@ export default function FeesPage() {
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedClassId, setSelectedClassId] = useState("");
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [selectedFee, setSelectedFee] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -129,6 +134,71 @@ export default function FeesPage() {
     } catch (err) {
       console.error("Failed to update status", err);
     }
+  };
+
+  const downloadReceipt = (row) => {
+    const doc = new jsPDF();
+    
+    doc.setFontSize(22);
+    doc.setTextColor(15, 23, 42);
+    doc.text("Eduverse Coaching", 105, 20, { align: "center" });
+    
+    doc.setFontSize(14);
+    doc.text("Fee Payment Receipt", 105, 30, { align: "center" });
+    
+    doc.setLineWidth(0.5);
+    doc.line(14, 35, 196, 35);
+    
+    doc.setFontSize(11);
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Student: ${row.studentId?.name || "N/A"}`, 14, 45);
+    doc.text(`Roll No: ${row.studentId?.studentId || "N/A"}`, 14, 52);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 120, 45);
+
+    doc.autoTable({
+      startY: 60,
+      head: [["Description", "Amount"]],
+      body: [
+        ["Total Fee", `Rs. ${row.totalAmount}`],
+        ["Paid Amount", `Rs. ${row.paidAmount}`],
+        ["Pending Amount", `Rs. ${row.pendingAmount}`],
+        ["Due Date", new Date(row.dueDate).toLocaleDateString()]
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [15, 23, 42] }
+    });
+
+    const finalY = doc.lastAutoTable.finalY + 20;
+    doc.setFontSize(14);
+    doc.setTextColor(15, 23, 42);
+    doc.text(`Status: ${row.status.toUpperCase()}`, 105, finalY, { align: "center" });
+
+    doc.save(`Fee_Receipt_${row.studentId?.name || "Student"}.pdf`);
+  };
+
+  const handlePayClick = (row) => {
+    setSelectedFee(row);
+    setPaymentModalOpen(true);
+  };
+
+  const processPayment = async (e) => {
+    e.preventDefault();
+    setIsProcessing(true);
+    
+    // Simulate payment delay
+    setTimeout(async () => {
+      try {
+        await api.put(`/fees/${selectedFee._id}`, { paidAmount: selectedFee.totalAmount });
+        setPaymentModalOpen(false);
+        setIsProcessing(false);
+        fetchData();
+        alert("Payment successful! Fee status updated.");
+      } catch (err) {
+        console.error("Payment failed", err);
+        setIsProcessing(false);
+        alert("Payment failed.");
+      }
+    }, 2000);
   };
 
   const getStatusBadge = (status) => {
@@ -329,24 +399,40 @@ export default function FeesPage() {
             { key: "pendingAmount", label: "Pending", render: (row) => `₹${row.pendingAmount}` },
             { key: "dueDate", label: "Due Date" },
             {
-              key: "status",
-              label: "Status",
+              key: "actions",
+              label: "Actions",
               render: (row) => (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 items-start">
                   {getStatusBadge(row.status)}
+                  <div className="flex gap-2 mt-1">
+                    <button 
+                      onClick={() => downloadReceipt(row)}
+                      className="text-[10px] font-bold text-indigo-600 hover:underline flex items-center gap-1"
+                    >
+                      📄 Receipt
+                    </button>
+                    {user.role === "student" && row.status !== "paid" && (
+                      <button 
+                        onClick={() => handlePayClick(row)}
+                        className="text-[10px] font-bold text-emerald-600 hover:underline flex items-center gap-1"
+                      >
+                        💳 Pay Now
+                      </button>
+                    )}
+                  </div>
                   {(user.role === "admin" || user.role === "teacher") && (
-                    <div className="flex gap-1">
+                    <div className="flex gap-2">
                       <button 
                         onClick={() => updateStatus(row._id, "paid")}
                         className="text-[10px] font-bold text-emerald-600 hover:underline"
                       >
-                        Paid
+                        Set Paid
                       </button>
                       <button 
                         onClick={() => updateStatus(row._id, "partial")}
                         className="text-[10px] font-bold text-amber-600 hover:underline"
                       >
-                        Partial
+                        Set Partial
                       </button>
                     </div>
                   )}
@@ -357,6 +443,48 @@ export default function FeesPage() {
           rows={visibleRows}
         />
       </div>
+
+      {/* Dummy Payment Modal */}
+      {paymentModalOpen && selectedFee && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden">
+            <div className="bg-slate-900 p-6 text-center">
+              <h3 className="text-xl font-bold text-white">Secure Payment</h3>
+              <p className="text-slate-400 text-sm mt-1">Complete your fee payment securely</p>
+            </div>
+            <div className="p-6">
+              <div className="flex justify-between mb-6 pb-6 border-b border-slate-100">
+                <span className="text-slate-500 font-semibold">Amount to Pay</span>
+                <span className="text-2xl font-black text-slate-900">₹{selectedFee.pendingAmount}</span>
+              </div>
+              
+              <form onSubmit={processPayment} className="space-y-4">
+                <div>
+                  <label className="label">Card Number (Dummy)</label>
+                  <input type="text" required className="input" placeholder="XXXX XXXX XXXX XXXX" defaultValue="4242 4242 4242 4242" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="label">Expiry</label>
+                    <input type="text" required className="input" placeholder="MM/YY" defaultValue="12/25" />
+                  </div>
+                  <div>
+                    <label className="label">CVV</label>
+                    <input type="text" required className="input" placeholder="123" defaultValue="123" />
+                  </div>
+                </div>
+                
+                <div className="flex gap-3 pt-4">
+                  <button type="button" onClick={() => setPaymentModalOpen(false)} className="px-4 py-3 rounded-xl font-bold text-slate-500 bg-slate-100 flex-1">Cancel</button>
+                  <button type="submit" disabled={isProcessing} className="px-4 py-3 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-500 flex-1 flex justify-center">
+                    {isProcessing ? "Processing..." : "Pay Securely"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

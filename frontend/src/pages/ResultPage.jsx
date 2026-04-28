@@ -3,6 +3,8 @@ import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import SectionHeader from "../components/SectionHeader";
 import Loader from "../components/Loader";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 export default function ResultPage() {
   const { user } = useAuth();
@@ -50,6 +52,99 @@ export default function ResultPage() {
     window.print();
   };
 
+  const generatePDF = (report) => {
+    const doc = new jsPDF();
+    
+    // Header
+    doc.setFontSize(22);
+    doc.setTextColor(15, 23, 42); // slate-900
+    doc.text("Eduverse Coaching", 105, 20, { align: "center" });
+    
+    doc.setFontSize(14);
+    doc.text("Academic Progress Report", 105, 30, { align: "center" });
+    
+    doc.setLineWidth(0.5);
+    doc.line(14, 35, 196, 35);
+    
+    // Student Info
+    doc.setFontSize(11);
+    doc.setTextColor(71, 85, 105); // slate-500
+    doc.text(`Student Name: `, 14, 45);
+    doc.text(`Roll No: `, 14, 52);
+    doc.text(`Standard: `, 120, 45);
+    doc.text(`Exam Type: `, 120, 52);
+
+    doc.setTextColor(15, 23, 42); // slate-900
+    doc.setFont("helvetica", "bold");
+    doc.text(`${data.student.name}`, 45, 45);
+    doc.text(`${data.student.studentId}`, 45, 52);
+    doc.text(`${data.student.standard}`, 145, 45);
+    doc.text(`${report.testType}`, 145, 52);
+    doc.setFont("helvetica", "normal");
+
+    // Table Data
+    const tableColumn = ["Subject Name", "Max Marks", "Obtained", "Remarks"];
+    const tableRows = [];
+
+    report.subjects.forEach(sub => {
+      const remark = sub.obtained / sub.max >= 0.75 ? "Distinction" : sub.obtained / sub.max >= 0.4 ? "Satisfactory" : "Needs Improvement";
+      tableRows.push([
+        sub.subjectName,
+        sub.max,
+        sub.obtained,
+        remark
+      ]);
+    });
+
+    tableRows.push([{ content: "GRAND TOTAL", styles: { halign: 'right', fontStyle: 'bold' } }, report.totalMax, report.totalObtained, ""]);
+
+    doc.autoTable({
+      startY: 60,
+      head: [tableColumn],
+      body: tableRows,
+      theme: 'grid',
+      headStyles: { fillColor: [15, 23, 42], textColor: 255 },
+      styles: { fontSize: 10, cellPadding: 5 },
+      columnStyles: {
+        0: { cellWidth: 70 },
+        1: { halign: 'center' },
+        2: { halign: 'center', fontStyle: 'bold' },
+        3: { halign: 'center' }
+      }
+    });
+
+    const finalY = doc.lastAutoTable.finalY + 20;
+    
+    // Summary Footer
+    doc.setFillColor(15, 23, 42); // slate-900
+    doc.roundedRect(14, finalY, 182, 30, 3, 3, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    
+    doc.setFontSize(10);
+    doc.text("Percentage", 40, finalY + 10, { align: "center" });
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text(`${report.percentage}%`, 40, finalY + 22, { align: "center" });
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text("Result Status", 105, finalY + 10, { align: "center" });
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text(`${report.status.toUpperCase()}`, 105, finalY + 22, { align: "center" });
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text("Grade", 170, finalY + 10, { align: "center" });
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    const grade = report.percentage >= 90 ? "A+" : report.percentage >= 75 ? "A" : report.percentage >= 60 ? "B" : report.percentage >= 40 ? "C" : "D";
+    doc.text(`${grade}`, 170, finalY + 22, { align: "center" });
+
+    doc.save(`${data.student.name}_Report_Card_${report.testType}.pdf`);
+  };
+
   if (loading && !data) return <Loader text="Generating report card..." />;
 
   return (
@@ -89,9 +184,12 @@ export default function ResultPage() {
 
       {data ? (
         <div className="space-y-8">
-          <div className="no-print flex justify-end">
-            <button onClick={handlePrint} className="btn-primary flex items-center gap-2">
-              <span>🖨️</span> Print Report Card
+          <div className="no-print flex justify-end gap-4">
+            <button onClick={handlePrint} className="btn-primary flex items-center gap-2 bg-slate-800 hover:bg-slate-700">
+              <span>🖨️</span> Print Page
+            </button>
+            <button onClick={() => generatePDF(data.results[0])} className="btn-primary flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500">
+              <span>📄</span> Download PDF
             </button>
           </div>
 

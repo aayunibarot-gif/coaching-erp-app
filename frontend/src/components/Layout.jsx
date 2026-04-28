@@ -92,15 +92,15 @@ export default function Layout() {
             <nav className="flex-1 space-y-1 overflow-y-auto px-4 custom-scrollbar">
               {navItems
                 .filter((item) => {
-                  if (user.role === "student") {
-                    // Students cannot see management pages
+                  if (user.role === "student" || user.role === "parent") {
+                    // Students and parents cannot see management pages
                     if (item.to === "/users") return false;
                     if (item.to === "/classes") return false;
                     if (item.to === "/subjects") return false;
                   }
 
-                  if (user.role === "admin" || user.role === "teacher") {
-                    // Admin and Teacher don't need AI Assistant or My Profile
+                  if (user.role === "admin" || user.role === "teacher" || user.role === "parent") {
+                    // Admin, Teacher, and Parent don't need AI Assistant or My Profile
                     if (item.to === "/assistant") return false;
                     if (item.to === "/profile") return false;
                   }
