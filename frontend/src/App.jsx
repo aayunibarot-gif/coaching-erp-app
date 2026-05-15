@@ -4,6 +4,7 @@ import { useAuth } from "./context/AuthContext";
 
 import Layout from "./components/Layout";
 import Loader from "./components/Loader";
+import IosInstallPrompt from "./components/IosInstallPrompt";
 
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -39,8 +40,10 @@ function ProtectedRoute({ children }) {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
+    <>
+      <IosInstallPrompt />
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
 
       <Route
@@ -69,6 +72,7 @@ export default function App() {
 
 
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      </Routes>
+    </>
   );
 }
