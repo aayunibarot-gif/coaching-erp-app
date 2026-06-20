@@ -94,10 +94,41 @@ export const sendRegistrationPendingEmailToStudent = async (studentName, student
     `,
   };
 
-  try {
-    await transporter.sendMail(mailOptions);
-    console.log(`[EMAIL] SUCCESS: Registration pending email sent to student.`);
-  } catch (error) {
-    console.error("[EMAIL] Registration email failed:", error.message);
-  }
-};
+    try {
+      await transporter.sendMail(mailOptions);
+      console.log(`[EMAIL] SUCCESS: Registration pending email sent to student.`);
+    } catch (error) {
+      console.error("[EMAIL] Registration email failed:", error.message);
+    }
+  };
+  
+  export const sendPasswordResetEmail = async (userName, userEmail, resetUrl) => {
+    const mailOptions = {
+      from: `"${APP_NAME}" <${process.env.SMTP_USER}>`,
+      to: userEmail,
+      subject: "Password Reset Request - Eduverse Coaching",
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; background-color: #ffffff;">
+          <h2 style="color: ${PRIMARY_COLOR}; text-align: center;">Password Reset Request</h2>
+          <p>Hello ${userName},</p>
+          <p>We received a request to reset your password. You can do this by clicking the button below:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}" 
+               style="background-color: ${PRIMARY_COLOR}; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.2);">
+              Reset Password
+            </a>
+          </div>
+          <p>If you didn't request a password reset, please ignore this email. The link will expire in 10 minutes.</p>
+          <hr style="border: 0; border-top: 1px solid #eee; margin-top: 30px;" />
+          <p style="color: #94a3b8; font-size: 12px; text-align: center;">This is an automated message from ${APP_NAME}.</p>
+        </div>
+      `,
+    };
+  
+    try {
+      await transporter.sendMail(mailOptions);
+      console.log(`[EMAIL] SUCCESS: Password reset email sent to ${userEmail}.`);
+    } catch (error) {
+      console.error("[EMAIL] Password reset email failed:", error.message);
+    }
+  };

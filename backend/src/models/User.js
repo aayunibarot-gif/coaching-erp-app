@@ -65,6 +65,9 @@ const userSchema = new mongoose.Schema(
         return this.role !== "student";
       }
     },
+
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
   },
   { timestamps: true }
 );

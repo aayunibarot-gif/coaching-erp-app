@@ -22,9 +22,10 @@ async function seed() {
   await Remark.deleteMany();
 
   const passwords = {
-    admin: await bcrypt.hash("admin123", 10),
-    teacher: await bcrypt.hash("teacher123", 10),
-    student: await bcrypt.hash("student123", 10),
+    admin: await bcrypt.hash("Admin@123", 10),
+    teacher: await bcrypt.hash("Teacher@123", 10),
+    student: await bcrypt.hash("Student@123", 10),
+    parent: await bcrypt.hash("Parent@123", 10),
   };
 
   const classes = await ClassModel.insertMany([
@@ -50,6 +51,12 @@ async function seed() {
       role: "teacher",
       phone: "9999999992",
     },
+  ]);
+
+  const adminUser = users.find((u) => u.role === "admin");
+  const teacherUser = users.find((u) => u.role === "teacher");
+
+  const studentUsers = await User.insertMany([
     {
       name: "Student User",
       email: "student@erp.com",
@@ -57,6 +64,7 @@ async function seed() {
       role: "student",
       phone: "9999999993",
       classId: sixth._id,
+      isApproved: true,
     },
     {
       name: "Riya Patel",
@@ -65,42 +73,54 @@ async function seed() {
       role: "student",
       phone: "9999999994",
       classId: tenth._id,
+      isApproved: true,
     },
   ]);
 
+  const studentUser = studentUsers.find((u) => u.email === "student@erp.com");
+
+  await User.create({
+    name: "Parent User",
+    email: "parent@erp.com",
+    password: passwords.parent,
+    role: "parent",
+    phone: "9999999995",
+    linkedStudentId: studentUser._id,
+    isApproved: true,
+  });
+
   const subjects = await Subject.insertMany([
-    { classId: sixth._id, subjectName: "Mathematics" },
-    { classId: sixth._id, subjectName: "Science" },
-    { classId: sixth._id, subjectName: "English" },
-    { classId: tenth._id, subjectName: "Mathematics" },
-    { classId: tenth._id, subjectName: "Science" },
-    { classId: tenth._id, subjectName: "English" },
+    { classId: sixth._id, subjectName: "Mathematics", teacherId: teacherUser._id },
+    { classId: sixth._id, subjectName: "Science", teacherId: teacherUser._id },
+    { classId: sixth._id, subjectName: "English", teacherId: teacherUser._id },
+    { classId: tenth._id, subjectName: "Mathematics", teacherId: teacherUser._id },
+    { classId: tenth._id, subjectName: "Science", teacherId: teacherUser._id },
+    { classId: tenth._id, subjectName: "English", teacherId: teacherUser._id },
   ]);
 
-  const studentUser = users.find((u) => u.email === "student@erp.com");
   const math6 = subjects.find((s) => s.classId.toString() === sixth._id.toString() && s.subjectName === "Mathematics");
   const sci6 = subjects.find((s) => s.classId.toString() === sixth._id.toString() && s.subjectName === "Science");
   const eng6 = subjects.find((s) => s.classId.toString() === sixth._id.toString() && s.subjectName === "English");
 
   await Attendance.insertMany([
-    { classId: sixth._id, studentId: studentUser._id, date: new Date("2026-04-01"), status: "present" },
-    { classId: sixth._id, studentId: studentUser._id, date: new Date("2026-04-02"), status: "present" },
-    { classId: sixth._id, studentId: studentUser._id, date: new Date("2026-04-03"), status: "absent" },
-    { classId: sixth._id, studentId: studentUser._id, date: new Date("2026-04-04"), status: "present" },
+    { classId: sixth._id, studentId: studentUser._id, date: "2026-04-01", status: "present", markedBy: adminUser._id },
+    { classId: sixth._id, studentId: studentUser._id, date: "2026-04-02", status: "present", markedBy: adminUser._id },
+    { classId: sixth._id, studentId: studentUser._id, date: "2026-04-03", status: "absent", markedBy: adminUser._id },
+    { classId: sixth._id, studentId: studentUser._id, date: "2026-04-04", status: "present", markedBy: adminUser._id },
   ]);
 
   await Mark.insertMany([
-    { classId: sixth._id, studentId: studentUser._id, subjectId: math6._id, testType: "Weekly Test", maxMarks: 100, obtainedMarks: 82, examDate: new Date("2026-04-05") },
-    { classId: sixth._id, studentId: studentUser._id, subjectId: sci6._id, testType: "Weekly Test", maxMarks: 100, obtainedMarks: 76, examDate: new Date("2026-04-05") },
-    { classId: sixth._id, studentId: studentUser._id, subjectId: eng6._id, testType: "Weekly Test", maxMarks: 100, obtainedMarks: 88, examDate: new Date("2026-04-05") },
+    { studentId: studentUser._id, subjectId: math6._id, testType: "Weekly Test", maxMarks: 100, obtainedMarks: 82, examDate: "2026-04-05" },
+    { studentId: studentUser._id, subjectId: sci6._id, testType: "Weekly Test", maxMarks: 100, obtainedMarks: 76, examDate: "2026-04-05" },
+    { studentId: studentUser._id, subjectId: eng6._id, testType: "Weekly Test", maxMarks: 100, obtainedMarks: 88, examDate: "2026-04-05" },
   ]);
 
   await Fee.insertMany([
-    { studentId: studentUser._id, classId: sixth._id, totalAmount: 12000, paidAmount: 8000, pendingAmount: 4000, dueDate: new Date("2026-05-01"), status: "partial" },
+    { studentId: studentUser._id, classId: sixth._id, totalAmount: 12000, paidAmount: 8000, pendingAmount: 4000, dueDate: "2026-05-01", status: "partial" },
   ]);
 
   await Remark.insertMany([
-    { studentId: studentUser._id, classId: sixth._id, text: "Good improvement in Mathematics. Needs more focus in Science." },
+    { studentId: studentUser._id, teacherId: teacherUser._id, classId: sixth._id, text: "Good improvement in Mathematics. Needs more focus in Science." },
   ]);
 
   console.log("Database seeded successfully");

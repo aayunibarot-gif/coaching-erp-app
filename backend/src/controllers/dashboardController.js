@@ -3,6 +3,7 @@ import ClassModel from "../models/Class.js";
 import Attendance from "../models/Attendance.js";
 import Fee from "../models/Fee.js";
 import Mark from "../models/Mark.js";
+import Subject from "../models/Subject.js";
 import { computeTrend } from "../utils/helpers.js";
 
 export async function getAdminDashboard(req, res) {
@@ -48,8 +49,9 @@ export async function getAdminDashboard(req, res) {
 }
 
 export async function getTeacherDashboard(req, res) {
-  const classes = await ClassModel.find({ _id: { $in: req.user.teacherClassIds || [] } });
-  const classIds = classes.map((c) => c._id);
+  const teacherSubjects = await Subject.find({ teacherId: req.user._id });
+  const classIds = [...new Set(teacherSubjects.map((s) => String(s.classId)))];
+  const classes = await ClassModel.find({ _id: { $in: classIds } });
   const attendance = await Attendance.find({ classId: { $in: classIds } });
   const marks = await Mark.find({ classId: { $in: classIds } }).populate("studentId", "name");
 
@@ -87,12 +89,16 @@ export async function getStudentDashboard(req, res) {
   const attendancePercent = attendance.length ? Number(((present / attendance.length) * 100).toFixed(2)) : 0;
   const trend = marks.length ? computeTrend(marks.map((m) => m.obtainedMarks)) : "Stable";
 
+  const sortedAttendance = [...attendance].sort((a, b) => b.date.localeCompare(a.date));
+  const recentAttendance = sortedAttendance.slice(0, 5);
+
   res.json({
     studentName: student.name,
     classInfo,
     attendancePercent,
     fees,
     marks,
-    trend
+    trend,
+    recentAttendance
   });
 }

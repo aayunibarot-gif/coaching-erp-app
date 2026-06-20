@@ -513,19 +513,24 @@ export default function DashboardPage() {
                 {
                   key: "date",
                   label: "Date",
-                  render: (row) => row.examDate || "-"
+                  render: (row) => row.date || "-"
                 },
                 {
-                  key: "trend",
-                  label: "Performance Trend",
-                  render: () => (
-                     <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">
-                      {dashboardData?.trend || "Stable"}
-                    </span>
-                  )
+                  key: "status",
+                  label: "Status",
+                  render: (row) =>
+                    row.status === "present" ? (
+                      <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                        Present
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">
+                        Absent
+                      </span>
+                    )
                 }
               ]}
-              rows={studentMarks}
+              rows={dashboardData?.recentAttendance || []}
             />
           </div>
           <div className="card md:col-span-2">
