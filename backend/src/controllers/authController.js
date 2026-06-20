@@ -111,9 +111,9 @@ export const register = async (req, res) => {
       isApproved: false,
     });
 
-    // Send emails
-    await sendApprovalEmailToAdmin(user.name, user.email, user._id);
-    await sendRegistrationPendingEmailToStudent(user.name, user.email);
+    // Send emails without blocking the response
+    sendApprovalEmailToAdmin(user.name, user.email, user._id).catch(console.error);
+    sendRegistrationPendingEmailToStudent(user.name, user.email).catch(console.error);
 
     res.status(201).json({
       message: "Registration successful. Please wait for admin approval.",
@@ -152,7 +152,7 @@ export const forgotPassword = async (req, res) => {
     const frontendUrl = process.env.CLIENT_URL || "http://localhost:5173";
     const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
 
-    await sendPasswordResetEmail(user.name, user.email, resetUrl);
+    sendPasswordResetEmail(user.name, user.email, resetUrl).catch(console.error);
 
     res.json({ message: "Password reset link sent to your email." });
   } catch (error) {
