@@ -4,14 +4,16 @@ import "dotenv/config";
 console.log("[DEBUG] email.js utility loaded (REAL GMAIL MODE)");
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: process.env.SMTP_HOST,
+  port: parseInt(process.env.SMTP_PORT),
+  secure: false,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
   tls: {
-    rejectUnauthorized: false
-  }
+    rejectUnauthorized: false,
+  },
 });
 
 const APP_NAME = "Eduverse Coaching";
