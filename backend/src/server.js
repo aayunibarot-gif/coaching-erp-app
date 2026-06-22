@@ -23,25 +23,11 @@ import resultRoutes from "./routes/resultRoutes.js";
 import materialRoutes from "./routes/materialRoutes.js";
 import path from "path";
 
-import User from "./models/User.js";
-import bcrypt from "bcryptjs";
 
 const app = express();
 await connectDB();
 
-// TEMPORARY BACKDOOR TO RESET ADMIN PASSWORD
-try {
-  const hashedPassword = await bcrypt.hash("admin123", 10);
-  await User.findOneAndUpdate(
-    { email: "admin@erp.com" },
-    { name: "Super Admin", password: hashedPassword, role: "admin", isApproved: true },
-    { upsert: true, new: true }
-  );
-  console.log("!!! ADMIN PASSWORD FORCE RESET TO admin123 !!!");
-} catch (err) {
-  console.error("Temp admin reset failed:", err);
-}
-// END TEMPORARY BACKDOOR
+
 
 app.use(
   cors({
