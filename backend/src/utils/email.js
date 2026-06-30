@@ -24,7 +24,7 @@ export const sendApprovalEmailToAdmin = async (studentName, studentEmail, userId
   const adminEmail = process.env.ADMIN_EMAIL || "aayunibarot@gmail.com";
   
   const mailOptions = {
-    from: `"${APP_NAME}" <${process.env.SMTP_USER}>`,
+    from: `"${APP_NAME}" <aayunibarot@gmail.com>`,
     to: adminEmail,
     subject: `Action Required: New Registration - ${studentName}`,
     html: `
@@ -60,7 +60,7 @@ export const sendApprovalEmailToAdmin = async (studentName, studentEmail, userId
 
 export const sendApprovalSuccessEmailToStudent = async (studentName, studentEmail) => {
   const mailOptions = {
-    from: `"${APP_NAME}" <${process.env.SMTP_USER}>`,
+    from: `"${APP_NAME}" <aayunibarot@gmail.com>`,
     to: studentEmail,
     subject: "Welcome to Eduverse Coaching - Account Approved!",
     html: `
@@ -84,7 +84,7 @@ export const sendApprovalSuccessEmailToStudent = async (studentName, studentEmai
 
 export const sendRegistrationPendingEmailToStudent = async (studentName, studentEmail) => {
   const mailOptions = {
-    from: `"${APP_NAME}" <${process.env.SMTP_USER}>`,
+    from: `"${APP_NAME}" <aayunibarot@gmail.com>`,
     to: studentEmail,
     subject: "Registration Successful - Eduverse Coaching",
     html: `
@@ -106,7 +106,7 @@ export const sendRegistrationPendingEmailToStudent = async (studentName, student
   
   export const sendPasswordResetEmail = async (userName, userEmail, resetUrl) => {
     const mailOptions = {
-      from: `"${APP_NAME}" <${process.env.SMTP_USER}>`,
+      from: `"${APP_NAME}" <aayunibarot@gmail.com>`,
       to: userEmail,
       subject: "Password Reset Request - Eduverse Coaching",
       html: `
